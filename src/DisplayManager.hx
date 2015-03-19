@@ -39,7 +39,10 @@ class DisplayManager extends MainStageMC
 	private var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
 	//
 	private var pressKeys:Map<Int, Bool> = new Map<Int, Bool>();
+	
 	private var isBusy:Bool = false;
+	private var cineEditMode:Bool = false;
+	
 	private var showingSheet:Bool = false;
 	private var phantomtile:MovieClip;
 	private var selectedtile:Int = 2;
@@ -56,7 +59,28 @@ class DisplayManager extends MainStageMC
 	private var mySpriteSheet:ShowSpriteSheets;
 	//
 	private var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
-	private var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
+	private var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();
+	//tilenum[key] = [class/string, xoffset, yoffset, sendtoGround,[animation,nonLoop],]
+
+	/*
+	 * tilenum[key][0] = e;//Class/String
+	 * tilenum[key][3] = tiledic[e][3];//sendtoGround
+	 * tilenum[key][4] = new Array();
+	 * tilenum[key][4][0] = tiledic[e][4][0];//Animation
+	 * tilenum[key][4][1] = tiledic[e][4][1];//nonLoop
+	 * tilenum[key][4][2] = tiledic[e][4][2];//afterAnimationif_nonLoop
+	 * tilenum[key][4][3] = tiledic[e][4][3];//syncTile
+	 * tilenum[key][5] = 1;//totalframes
+	 * tilenum[key][6] = tiledic[e][6];//walkType
+	 * tilenum[key][7] = tiledic[e][7];//Extends standardTile
+	 * tilenum[key][8] = tiledic[e][8];//width
+	 * tilenum[key][9] = tiledic[e][9];//height
+	 * tilenum[key][10] = tiledic[e][11];//depthpoint:int
+	 */
+	
+	
+	
+
 	private var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
 	
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
@@ -287,15 +311,15 @@ class DisplayManager extends MainStageMC
 		}
 		isBusy = false;
 	}
-	var ignoreList:Array = [omni.BUTTERFLY];//tiles to ignore
+	
+	
+	private var ignoreList:Array<Int> = [omni.BUTTERFLY];//tiles to ignore
 	function extendTilesLoop(layer:Int):Void{
 		for (i in 0...rows) {
 			for (o in 0...columns) {
 				var key:Int = map[i][o][layer];
 				
 				if (key!=0) {
-					
-					
 						
 					if(!func.isiteminarray(ignoreList,key)){
 						var dtile = tilenum[key][0];
@@ -307,14 +331,11 @@ class DisplayManager extends MainStageMC
 							var xxf:Int = (o * tileWidth)-tilenum[key][1];
 							var yyf:Int = (i * tileHeight)-tilenum[key][2];
 
-							largerthanView.push([i,o,sWidth,layer,sHeight,xxf,yyf]);
-							
-							
+							largerthanView.push([i,o,sWidth,layer,sHeight,xxf,yyf]);							
 						}
-						if (tilenum[key][4][0]) {
+						if (tilenum[key].ani_hasAnimation){//[4][0]) {
 							var numKey:Int = (i * columns) + o;
-							
-							
+
 							anitileList[numKey] = [1,tilenum[key][5]];//FrameNum , totalFrames
 						}
 					}
@@ -406,29 +427,26 @@ class DisplayManager extends MainStageMC
 		groundclip.addChild(phantomtile);
 	}
 
-	function startplacetile(e:MouseEvent):Void{
+	private function startplacetile(e:MouseEvent):Void{
 			if (!isBusy && !cineEditMode) {
 				prePlace = "";
 				placer.addEventListener(Event.ENTER_FRAME,placetile);
 			}
 	}
-	function stopplacetile(e:MouseEvent):Void{
+	private function stopplacetile(e:MouseEvent):Void{
 		placer.removeEventListener(Event.ENTER_FRAME,placetile);
 	}
-	function placetile(e:Event):Void{
+	private function placetile(e:Event):Void{
 		if(saveBusy){
 			return;
 		}
 		
-		
-		var spritego:Boolean = true;
-		
+		var spritego:Bool = true;
 		if(mySpriteSheet!=null){
 			if(mySpriteSheet.hitTestPoint(stage.mouseX,stage.mouseY,true)){
 				spritego = false;
 			}
-		}
-		
+		}	
 		
 		var dx:Int =  Math.floor((groundclip.mouseX+cam_point.x)/tileWidth)*tileWidth;
 		var dy:Int = Math.floor((groundclip.mouseY+cam_point.y)/tileHeight)*tileHeight;
@@ -523,11 +541,11 @@ class DisplayManager extends MainStageMC
 			}
 		}
 	}
-	function removeAnimationTile(ey:Int,ex:Int,activelayer:Int):Void{
+	private function removeAnimationTile(ey:Int,ex:Int,activelayer:Int):Void{
 		if (map[ey][ex][activelayer]!=0) {
 			//trace("REMOVE IN:",1,map[ey][ex][activelayer]);
 			//trace("REMOVE IN:",1.5,map[ey][ex][activelayer],tilenum[map[ey][ex][activelayer]][4]);
-			if (tilenum[map[ey][ex][activelayer]][4][0]) {
+			if (tilenum[map[ey][ex][activelayer]].ani_hasAnimation){ //[4][0]) {
 				//trace("REMOVE IN:",2);
 				for (i in 0...anitileList.length) {//for (var i in anitileList) {
 					//trace("REMOVE:",i,anitileList);
@@ -652,8 +670,8 @@ class DisplayManager extends MainStageMC
 		setghosttile();
 	}
 	function resetBitmap(runonce:Bool=false):Void{
-		cam_pointx.text = String(cam_point.x);
-		cam_pointy.text = String(cam_point.y);
+		cam_pointx.text = cam_point.x+"";
+		cam_pointy.text = cam_point.y+"";
 
 		if (runonce) {
 			anitileList = [];
@@ -680,9 +698,6 @@ class DisplayManager extends MainStageMC
 			yend = rows-1;
 		}
 		
-
-		
-		
 		if(bgfill > 0){
 			bufferBD.copyPixels(tilebitdata[bgfill],new Rectangle(0, 0 ,screenWidth,400) ,new Point(tileWidth,tileHeight));
 		}else{
@@ -692,36 +707,26 @@ class DisplayManager extends MainStageMC
 
 		skybuffer.fillRect(bufferBD.rect,fillcolour);
 		
-		
-
-		var tileList1:Array = [];
+		var tileList1:Array<DrawObject> = new Array<DrawObject>();
 		if (layer0visi) {
-
 			tileList1 = listLoop(0,runonce,yst,yend,colstart,colend);
 			//theloop(0,runonce,yst,yend,colstart,colend);
 		}
 		if (layer1visi) {
 
-			var tileList2:Array = listLoop(1,runonce,yst,yend,colstart,colend);
-
-			
+			var tileList2:Array<DrawObject> = listLoop(1,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat( tileList2[1]);
-			
 			tileList2 = tileList2[0];
 			
-			var extendList:Array = listExtensions(yst,yend,colstart,colend);
-					
+			var extendList:Array<DrawObject> = listExtensions(yst,yend,colstart,colend);	
 			tileList2= tileList2.concat(extendList);
-			
 			tileList2.sortOn(["y","x"], Array.NUMERIC);
-			
-			
+
 			tileList1= tileList1.concat(tileList2);
-			
 		}
 		if (layer2visi) {
 
-			var tileList3:Array = listLoop(2,runonce,yst,yend,colstart,colend);
+			var tileList3:Array<DrawObject> = listLoop(2,runonce,yst,yend,colstart,colend);
 			//theloop(2,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList3);
 		
@@ -729,7 +734,7 @@ class DisplayManager extends MainStageMC
 		//invisible action event layer
 		if (layer3visi) {
 
-			var tileList4:Array = listLoop(3,runonce,yst,yend,colstart,colend);
+			var tileList4:Array<DrawObject> = listLoop(3,runonce,yst,yend,colstart,colend);
 			//theloop(3,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList4);
 		}
@@ -737,12 +742,9 @@ class DisplayManager extends MainStageMC
 		
 		// walkable layer
 		if (walklayervisi) {
-			var tileList5:Array = listWalkable(yst,yend,colstart,colend);
+			var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList5);
 		}
-		
-		
-		
 		
 		drawAll(tileList1);
 
@@ -751,14 +753,13 @@ class DisplayManager extends MainStageMC
 			for (t in warpGates[s][3].length) { //for (var t in warpGates[s][3]) {
 				var z:Int = warpGates[s][3][t][1];
 				var q:Int = warpGates[s][3][t][0];
-				
-				
+
 				//var dtile:Class = getDefinitionByName("tl_wg_" + s)  as Class;
 				//var key:Int = tiledic[dtile][0];
 				var key:Int = tiledic.get("tl_wg_" + s).key;
 				
-				var dx:Int = (q * tileWidth)-cam_point.x+tileWidth;
-				var dy:Int = (z * tileHeight)-cam_point.y+tileHeight;
+				var dx:Int = (q * tileWidth)- cam_point.x + tileWidth;
+				var dy:Int = (z * tileHeight)- cam_point.y + tileHeight;
 				var pt:Point = new Point(dx, dy);
 				var rec:Rectangle =  new Rectangle(0, 0, tileWidth, tileHeight);
 				bufferBD.copyPixels(tilebitdata[key], rec, pt,null,null,true);
@@ -772,13 +773,13 @@ class DisplayManager extends MainStageMC
 		skyBD.copyPixels(skybuffer,new Rectangle(tileWidth,tileHeight,skybuffer.width,skybuffer.height) ,new Point(0,0));
 	}
 
-	function listExtensions(yst:Int,yend:Int,colstart:Int,colend:Int):Array{
+	function listExtensions(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
 		
-		var campointx:Int = cam_point.x;
-		var campointy:Int = cam_point.y;
+		var campointx:Float = cam_point.x;
+		var campointy:Float = cam_point.y;
 		var clipRect:Rectangle = new Rectangle(0,0,50,50);
-		var dlist:Array = [];
-		var ob:Object = {};
+		var dlist:Array<DrawObject> = new Array<DrawObject>();
+		var ob:DrawObject;
 		//[0] = row
 		//[1] = column
 		//[2] = width
@@ -810,10 +811,10 @@ class DisplayManager extends MainStageMC
 						continue;
 					}
 					
-					ob = {}
+					ob = new DrawObject();
 					ob.x = q * tileWidth;
 					ob.y = z * tileHeight;
-					ob.BitmapData = tilebitdata[key];
+					ob.bitmapData = tilebitdata[key];
 					ob.width = tilebitdata[key].width;
 					ob.height = tilebitdata[key].height;
 					ob.xoff = clipRect.x;
@@ -825,10 +826,10 @@ class DisplayManager extends MainStageMC
 		return dlist;
 	}
 
-	 function drawAll(superArray:Array):Void{
-		var dispList:Array = superArray;
+	private function drawAll(superArray:Array<DrawObject>):Void{
+		var dispList:Array<DrawObject> = superArray;
 		var dlength:Int = dispList.length;
-		var len:Object;
+		var len:DrawObject;
 		var pPo:Point = new Point(0,0);
 		var rRe:Rectangle = new Rectangle(0,0,0,0);
 		
@@ -838,7 +839,7 @@ class DisplayManager extends MainStageMC
 			pPo.y = len.yoff;
 			rRe.width = len.width;
 			rRe.height = len.height;	
-			bufferBD.copyPixels(len.BitmapData, rRe, pPo);
+			bufferBD.copyPixels(len.bitmapData, rRe, pPo);
 		}			
 	}
 
@@ -846,17 +847,19 @@ class DisplayManager extends MainStageMC
 		var whichBuffer:BitmapData = bufferBD;
 
 		var key:Int = map[z][q][layer];
+		var tob:TileObject = tilenum[key];
 
 		var dx:Int = (q * tileWidth)-cam_point.x+tileWidth;
 		var dy:Int = (z * tileHeight)-cam_point.y+tileHeight;
 		
-		var pt:Point = new Point(dx-(tilenum[key][1]), dy-(tilenum[key][2]));
+		//var pt:Point = new Point(dx-(tilenum[key][1]), dy-(tilenum[key][2]));
+		var pt:Point = new Point(dx-(tob.xoffset), dy-(tob.yoffset));
 		var rec:Rectangle =  new Rectangle(0, 0, tilebitdata[key].width, tilebitdata[key].height);
 		
-		if (tilenum[key][4][0] && anitileList[z+"_"+q]) {
+		if (tob.ani_hasAnimation && anitileList[z+"_"+q]) { //if (tilenum[key][4][0] && anitileList[z+"_"+q]) {
 			var toPaste:Int = anitileList[z+"_"+q][3]+1;
 
-			if (toPaste>tilenum[key][5]) {
+			if (toPaste>tob.totalFrames){ //tilenum[key][5]) {
 				toPaste=1;
 				anitileList[z+"_"+q][3]=0;
 			}
@@ -870,10 +873,10 @@ class DisplayManager extends MainStageMC
 	}
 
 
-	function listWalkable(yst:Int,yend:Int,colstart:Int,colend:Int):Array {
-		var dlist:Array = [];
-		var sendtobot:Array = [];
-		var ob:Object = {};
+	private function listWalkable(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
+		var dlist:Array<DrawObject> = new Array<DrawObject>();
+		var sendtobot:Array = new Array<DrawObject>();
+		var ob:DrawObject;
 		var numKey:Int;
 		var key:Int;
 		var xoffset:Int;
@@ -892,7 +895,9 @@ class DisplayManager extends MainStageMC
 						if(key == 0){
 							continue;
 						}
-						if (tilenum[ key ][6]  == 1) { // walkable tile
+						
+						var tob:TileObject = tilenum[key];
+						if (tob.walkType  == 1) { // walkable tile
 							//q -> xoffset
 							//z -> yoffset
 							
@@ -901,19 +906,18 @@ class DisplayManager extends MainStageMC
 							xoffset = (q * tileWidth)-campointx+tileWidth;
 							yoffset = (z * tileHeight)-campointy+tileHeight;
 
-							ob = {};
+							ob = new DrawObject();
 							ob.x = (q * tileWidth);
-							ob.y = (z * tileHeight)+0+tilenum[key][10];
+							ob.y = (z * tileHeight) + 0 + tob.depthPoint; //tilenum[key][10];
 
 							numKey = (z * columns) + q;
 							
-							
-							ob.BitmapData = tilebitdata[key];
+							ob.bitmapData = tilebitdata[key];
 							ob.width = tilebitdata[key].width;
 							ob.height = tilebitdata[key].height;
 							
-							ob.xoff = xoffset-(tilenum[key][1]);
-							ob.yoff = yoffset-(tilenum[key][2]);
+							ob.xoff = xoffset - (tob.xoffset);//tilenum[key][1]);
+							ob.yoff = yoffset - (tob.yoffset);//tilenum[key][2]);
 							dlist.push(ob);
 						}
 					}
@@ -923,10 +927,10 @@ class DisplayManager extends MainStageMC
 		return dlist;
 	}
 
-	function listLoop(layer:Int,runonce:Boolean,yst:Int,yend:Int,colstart:Int,colend:Int):Array {
-		var dlist:Array = [];
-		var sendtobot:Array = [];
-		var ob:Object = {};
+	private function listLoop(layer:Int,runonce:Bool,yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
+		var dlist:Array<DrawObject> = new Array<DrawObject>();
+		var sendtobot:Array<DrawObject> = new Array<DrawObject>();
+		var ob:DrawObject;
 		var numKey:Int;
 		var key:Int;
 		var xoffset:Int;
@@ -934,8 +938,10 @@ class DisplayManager extends MainStageMC
 		var pPoint:Point = new Point();
 		var rRect:Rectangle = new Rectangle(0,0,0,0);
 		
-		var campointx:Int = cam_point.x;
-		var campointy:Int = cam_point.y;
+		var campointx:Int = cast(cam_point.x, Int);
+		var campointy:Int = cast(cam_point.y, Int);
+		
+		var tob:TileObject;
 		
 		for (z in yst...(yend+1)) {
 			if (z>=0) {
@@ -947,37 +953,38 @@ class DisplayManager extends MainStageMC
 							//z -> yoffset
 							
 							key = map[z][q][layer];
+							tob = tilenum[key];
 
 							xoffset = (q * tileWidth)-campointx+tileWidth;
 							yoffset = (z * tileHeight)-campointy+tileHeight;
 
-							ob = {};
+							ob = new DrawObject();
 							ob.x = (q * tileWidth);
 
-							ob.y = (z * tileHeight)+layer+tilenum[key][10];
+							ob.y = (z * tileHeight) + layer + tob.depthPoint; //tilenum[key][10];
 
 							numKey = (z * columns) + q;
 							
-							if(anitileList[numKey] && tilenum[key][4][0]){
+							if(anitileList[numKey] && tob.ani_hasAnimation){ //tilenum[key][4][0]){
 								
-								ob.BitmapData = tilebitdata[key+"_"+anitileList[numKey][0]];
+								ob.bitmapData = tilebitdata[key+"_"+anitileList[numKey][0]];
 								if(anitileList[numKey][0]+1>anitileList[numKey][1]){
 									anitileList[numKey][0] = 1;
 								}else{
 									anitileList[numKey][0]++;
 								}									
 							}else{
-								ob.BitmapData = tilebitdata[key];
+								ob.bitmapData = tilebitdata[key];
 							}
 							
 							ob.width = tilebitdata[key].width;
 							ob.height = tilebitdata[key].height;
 							
-							ob.xoff = xoffset-(tilenum[key][1]);
-							ob.yoff = yoffset-(tilenum[key][2]);
+							ob.xoff = xoffset - (tob.xoffset);// tilenum[key][1]);
+							ob.yoff = yoffset - (tob.yoffset);// tilenum[key][2]);
 							
 							if(layer==1){
-								if(tilenum[key][3]){
+								if(tob.sendToGround){ //tilenum[key][3]){
 									sendtobot.push(ob);
 								}else{											
 									dlist.push(ob);
