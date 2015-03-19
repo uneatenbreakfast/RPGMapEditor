@@ -56,6 +56,11 @@ class TileObject
 		ani_afterAnimationTile = afterAnimationTile;
 		ani_syncTile = syncTile;
 		//tiledic[classname][4] = [animation,true:NOTLOOP false:isLoop,AfterAnmationTile,syncTile]
+		
+		//tiledic[classname][4][0] = isAnimationTile 
+		//tiledic[classname][4][1] = isNOTaLoop - true:NOTLOOP false:isLoop
+		//tiledic[classname][4][2] = afterAnimationTile
+		//tiledic[classname][4][3] = syncTile
 	}
 	
 }
