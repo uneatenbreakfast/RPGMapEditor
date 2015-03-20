@@ -1,5 +1,6 @@
 package ;
 
+import fl.motion.Color;
 import flash.display.Bitmap;
 import flash.display.MovieClip;
 import flash.display.Sprite;
@@ -9,6 +10,7 @@ import flash.events.KeyboardEvent;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.display.BitmapData;
+import Omni;
 /**
  * ...
  * @author Nelson
@@ -305,7 +307,8 @@ class DisplayManager extends MainStageMC
 			extendTilesLoop(0);
 			extendTilesLoop(1);
 			extendTilesLoop(2);
-			largerthanView.sort(Array.UNIQUESORT);
+			//largerthanView.sort(Array.UNIQUESORT);
+			largerthanView.sort(sortByY);
 			
 			resetBitmap(true);		
 		}
@@ -313,7 +316,7 @@ class DisplayManager extends MainStageMC
 	}
 	
 	
-	private var ignoreList:Array<Int> = [omni.BUTTERFLY];//tiles to ignore
+	private var ignoreList:Array<Int> = [Omni.BUTTERFLY];//tiles to ignore
 	function extendTilesLoop(layer:Int):Void{
 		for (i in 0...rows) {
 			for (o in 0...columns) {
@@ -353,19 +356,18 @@ class DisplayManager extends MainStageMC
 		switch (e.target) {
 			case bg0 :
 				nowlayer=0;
-				break;
+
 			case bg1 :
 				nowlayer=1;
-				break;
+
 			case bg2 :
 				nowlayer=2;
-				break;
+
 			case bg3 :
 				nowlayer=3;
-				break;
+
 			case obis:
 				nowlayer = 4;
-			break;
 		}
 		activelayer = nowlayer;
 		activelaybut = e.target;
@@ -465,7 +467,7 @@ class DisplayManager extends MainStageMC
 						}
 						resetBitmap();
 					}else if (activelayer == 4) {
-						var over:Boolean=false;
+						var over:Bool = false;
 						var sw:Int = warptlist.selectedItem.label;
 						for(s in 0...warpGates[sw][3]){
 							if(warpGates[sw][3][s][0] == ex && warpGates[sw][3][s][1] == ey){
@@ -492,7 +494,7 @@ class DisplayManager extends MainStageMC
 									
 										removeAnimationTile(ey,ex,activelayer);
 										map[ey][ex][activelayer]=selected_Array[ro][co];
-										if (tiledic[tilenum[map[ey][ex][activelayer]][0]][4][0]) {
+										if (tilenum[map[ey][ex][activelayer]].ani_hasAnimation) { //if (tiledic[tilenum[map[ey][ex][activelayer]][0]][4][0]) {
 											anitileList[ey+"_"+ex]=[ey,ex,activelayer,1];
 										}
 									}
@@ -502,23 +504,23 @@ class DisplayManager extends MainStageMC
 						}else{
 							removeAnimationTile(ey,ex,activelayer);
 							map[ey][ex][activelayer]=selectedtile;
-							if (tiledic[tilenum[map[ey][ex][activelayer]][0]][4][0]) {
+							if (tilenum[map[ey][ex][activelayer]].ani_hasAnimation) {//if (tiledic[tilenum[map[ey][ex][activelayer]][0]][4][0]) {
 								anitileList[ey+"_"+ex]=[ey,ex,activelayer,1];
 							}
 							
 							
 							var key:Int = selectedtile;
 							if(!func.isiteminarray(ignoreList,key)){
-								var dtile = tilenum[key][0];
-								if (tiledic[dtile][7]) {
-									var sWidth:Int = tilenum[key][8];
-									var sHeight:Int = tilenum[key][9];
+								var dtile = tilenum[key];
+								if (dtile.extendsStandardTile) {//if (tiledic[dtile][7]) {
+									var sWidth:Float = dtile.width; // tilenum[key][8];
+									var sHeight:Float = dtile.height; // tilenum[key][9];
 									var i:Int = ey;
 									var o:Int = ex;
 									//trace("WH:",sWidth,sHeight,"     ",key,tilenum[key]);
 			
-									var xxf:Int = (o * tileWidth)-tilenum[key][1];
-									var yyf:Int = (i * tileHeight)-tilenum[key][2];
+									var xxf:Int = Std.int((o * tileWidth) - dtile.xoffset);// tilenum[key][1];
+									var yyf:Int = Std.int((i * tileHeight) - dtile.yoffset);// tilenum[key][2];
 			
 									largerthanView.push([i,o,sWidth,activelayer,sHeight,xxf,yyf]);
 								}
@@ -663,7 +665,7 @@ class DisplayManager extends MainStageMC
 		eraseBrush = false;
 		
 		selectedtile = e.currentTarget.tilenumber;
-		selct.text = String(selectedtile);
+		selct.text = selectedtile+"";
 		selected_Array = new Array();
 
 		groundclip.removeChild(phantomtile);
@@ -707,38 +709,41 @@ class DisplayManager extends MainStageMC
 
 		skybuffer.fillRect(bufferBD.rect,fillcolour);
 		
-		var tileList1:Array<Array<DrawObject>> = new Array<Array<DrawObject>>();
+		var tileList1Return:Array<Array<DrawObject>> = new Array<Array<DrawObject>>();
+		var tileList1:Array<DrawObject> = new Array<DrawObject>();
 		if (layer0visi) {
-			tileList1 = listLoop(0,runonce,yst,yend,colstart,colend);
+			tileList1Return = listLoop(0, runonce, yst, yend, colstart, colend);
+			tileList1 = tileList1Return[0];
 			//theloop(0,runonce,yst,yend,colstart,colend);
 		}
 		if (layer1visi) {
 
-			var tileList2:Array<Array<DrawObject>> = listLoop(1,runonce,yst,yend,colstart,colend);
-			tileList1 = tileList1.concat( tileList2[1]);
+			var tileList2Return:Array<Array<DrawObject>> = listLoop(1, runonce, yst, yend, colstart, colend);
+			var tileList2:Array<DrawObject> = new Array<DrawObject>();
+			tileList1 = tileList1.concat( tileList2Return[1]);			
 			
-			
-			tileList2 = tileList2[0];
+			tileList2 = tileList2Return[0];
 			
 			var extendList:Array<DrawObject> = listExtensions(yst,yend,colstart,colend);	
-			tileList2= tileList2.concat(extendList);
-			tileList2.sortOn(["y","x"], Array.NUMERIC);
+			tileList2 = tileList2.concat(extendList);
+			//tileList2.sortOn(["y","x"], Array.NUMERIC);
+			tileList2.sort(sortByY);
 
 			tileList1= tileList1.concat(tileList2);
 		}
 		if (layer2visi) {
 
-			var tileList3:Array<DrawObject> = listLoop(2,runonce,yst,yend,colstart,colend);
+			var tileList3Return:Array<Array<DrawObject>> = listLoop(2,runonce,yst,yend,colstart,colend);
 			//theloop(2,runonce,yst,yend,colstart,colend);
-			tileList1= tileList1.concat(tileList3);
+			tileList1= tileList1.concat(tileList3Return[0]);
 		
 		}
 		//invisible action event layer
 		if (layer3visi) {
 
-			var tileList4:Array<DrawObject> = listLoop(3,runonce,yst,yend,colstart,colend);
+			var tileList4Return:Array<Array<DrawObject>> = listLoop(3,runonce,yst,yend,colstart,colend);
 			//theloop(3,runonce,yst,yend,colstart,colend);
-			tileList1= tileList1.concat(tileList4);
+			tileList1= tileList1.concat(tileList4Return[0]);
 		}
 		
 		
@@ -760,8 +765,8 @@ class DisplayManager extends MainStageMC
 				//var key:Int = tiledic[dtile][0];
 				var key:Int = tiledic.get("tl_wg_" + s).key;
 				
-				var dx:Int = (q * tileWidth)- cam_point.x + tileWidth;
-				var dy:Int = (z * tileHeight)- cam_point.y + tileHeight;
+				var dx:Float = (q * tileWidth)- cam_point.x + tileWidth;
+				var dy:Float = (z * tileHeight)- cam_point.y + tileHeight;
 				var pt:Point = new Point(dx, dy);
 				var rec:Rectangle =  new Rectangle(0, 0, tileWidth, tileHeight);
 				bufferBD.copyPixels(tilebitdata[key], rec, pt,null,null,true);
@@ -773,6 +778,12 @@ class DisplayManager extends MainStageMC
 		skybuffer.unlock();
 		canvasBD.copyPixels(bufferBD,new Rectangle(tileWidth,tileHeight,bufferBD.width,bufferBD.height) ,new Point(0,0));
 		skyBD.copyPixels(skybuffer,new Rectangle(tileWidth,tileHeight,skybuffer.width,skybuffer.height) ,new Point(0,0));
+	}
+	
+	private function sortByY(a:DrawObject, b:DrawObject):Int {
+		if (a.y == b.y) return 0;
+		if (a.y > b.y) return 1;
+		return -1;
 	}
 
 	function listExtensions(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
@@ -851,8 +862,8 @@ class DisplayManager extends MainStageMC
 		var key:Int = map[z][q][layer];
 		var tob:TileObject = tilenum[key];
 
-		var dx:Int = (q * tileWidth)-cam_point.x+tileWidth;
-		var dy:Int = (z * tileHeight)-cam_point.y+tileHeight;
+		var dx:Int = Std.int((q * tileWidth)-cam_point.x+tileWidth);
+		var dy:Int = Std.int((z * tileHeight)-cam_point.y+tileHeight);
 		
 		//var pt:Point = new Point(dx-(tilenum[key][1]), dy-(tilenum[key][2]));
 		var pt:Point = new Point(dx-(tob.xoffset), dy-(tob.yoffset));
@@ -1041,12 +1052,9 @@ class DisplayManager extends MainStageMC
 		 //delete pressKeys[ e.keyCode ];
 	} 
 	function addrowscol(keypress:Int):Void{
-		var rowx:Array = new Array();
-		var i:Int = 0;
-		var sw;
-		var s;
-		var tt;
-		var restmap:Boolean = false;
+		var rowx:Array<Array<Int>> = new Array<Array<Int>>();
+		var tt:Int;
+		var restmap:Bool = false;
 		switch (keypress) {
 			case 38 :
 			//top
@@ -1070,7 +1078,7 @@ class DisplayManager extends MainStageMC
 					}
 				}
 
-				break;
+				//break;
 			case 40 :
 			//bottom
 				rows++;
@@ -1080,7 +1088,7 @@ class DisplayManager extends MainStageMC
 				
 				map.push(rowx);
 				restmap = true;
-				break;
+				//break;
 
 			case 37 :
 			//left
@@ -1102,7 +1110,7 @@ class DisplayManager extends MainStageMC
 					}
 				}
 				
-				break;
+				//break;
 			case 39 :
 			//right
 				columns++;
@@ -1111,19 +1119,15 @@ class DisplayManager extends MainStageMC
 				}
 
 				restmap = true;
-				break;
-
-
+				//break;
 		}
 		if (restmap) {
 			resetBitmap(true);
 		}
 	}
 	function trimmap(keypress:Int):Void{
-		var restmap:Boolean = false;
+		var restmap:Bool = false;
 		var i:Int = 0;
-		var sw;
-		var s;
 		var tt:Int;
 		switch (keypress) {
 			case 38 :
@@ -1142,8 +1146,7 @@ class DisplayManager extends MainStageMC
 						warpGates[sw][3][s][1]--;
 					}
 				}
-				
-				break;
+
 			case 40 :
 			//bottom
 				if(cam_point.y>0){
@@ -1152,8 +1155,7 @@ class DisplayManager extends MainStageMC
 				rows--;
 				map.pop();
 				restmap = true;
-				
-				break;
+
 			case 37 :
 			//left
 				columns--;
@@ -1180,8 +1182,7 @@ class DisplayManager extends MainStageMC
 						warpGates[sw][3][s][0]--;
 					}
 				}
-				
-				break;
+
 			case 39 :
 			//right
 				columns--;
@@ -1193,7 +1194,6 @@ class DisplayManager extends MainStageMC
 				}
 
 				restmap = true;
-				break;
 		}
 		if (restmap) {
 			resetBitmap(true);
