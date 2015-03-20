@@ -287,13 +287,13 @@ class TileManager extends Sprite
 		for (ni in 1...(tilenumLength+1)) {
 			var inarr:Bool = false;
 			for (kx in tilesetArr) {//for (kx in tilesets) {
-				if (isiteminarray (tilesets[kx], ni)) {
+				if (Func.isiteminarray (tilesets[kx], ni)) {
 					inarr = true;
 					break;
 				}
 			}
 			
-			if (isiteminarray (partofSheet, ni)) {
+			if (Func.isiteminarray (partofSheet, ni)) {
 				break;
 			}
 			
@@ -445,19 +445,7 @@ class TileManager extends Sprite
 		isBusy = false;
 	}
 	
-	private function isiteminarray (arrayx:Array<Dynamic>, item:Dynamic):Bool {
-		var r:Bool = false;
-		for (z in 0...arrayx.length) {
-			if (arrayx[z] == item) {
-				r = true;
-				break;
-			} else if (z == arrayx.length-1) {
-				r = false;
-				break;
-			}
-		}
-		return r;
-	}
+	
 
 	/*
 	//-------

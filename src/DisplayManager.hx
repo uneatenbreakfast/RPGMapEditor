@@ -324,22 +324,22 @@ class DisplayManager extends MainStageMC
 				
 				if (key!=0) {
 						
-					if(!func.isiteminarray(ignoreList,key)){
-						var dtile = tilenum[key][0];
+					if(!Func.isiteminarray(ignoreList,key)){
+						var dtile:TileObject = tilenum[key];
 											
-						if (tiledic[dtile][7]) {
-							var sWidth:Int = tilenum[key][8];
-							var sHeight:Int = tilenum[key][9];
+						if(dtile.extendsStandardTile){//if (tiledic[dtile][7]) {
+							var sWidth:Int = Std.int(dtile.width);// tilenum[key][8];
+							var sHeight:Int = Std.int(dtile.height);// tilenum[key][9];
 							
-							var xxf:Int = (o * tileWidth)-tilenum[key][1];
-							var yyf:Int = (i * tileHeight)-tilenum[key][2];
+							var xxf:Int = Std.int((o * tileWidth) - dtile.xoffset);// tilenum[key][1];
+							var yyf:Int = Std.int((i * tileHeight) - dtile.yoffset);// tilenum[key][2];
 
 							largerthanView.push([i,o,sWidth,layer,sHeight,xxf,yyf]);							
 						}
 						if (tilenum[key].ani_hasAnimation){//[4][0]) {
 							var numKey:Int = (i * columns) + o;
 
-							anitileList[numKey] = [1,tilenum[key][5]];//FrameNum , totalFrames
+							anitileList[numKey] = [1, dtile.totalFrames];//FrameNum , totalFrames
 						}
 					}
 				}
@@ -381,16 +381,12 @@ class DisplayManager extends MainStageMC
 		switch (e.target) {
 			case on0 :
 				num = 0;
-				break;
 			case on1 :
 				num=1;
-				break;
 			case on2 :
 				num=2;
-				break;
 			case on3 :
 				num=3;
-				break;
 			case walk_eye :
 				if(walklayervisi){// turn it off
 					e.target.gotoAndStop(2);
@@ -401,7 +397,6 @@ class DisplayManager extends MainStageMC
 				}
 				resetBitmap();
 				return;
-				break;
 		}
 		
 		if(this["layer"+num+"visi"]){
