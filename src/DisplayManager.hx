@@ -268,23 +268,23 @@ class DisplayManager extends MainStageMC
 	}
 
 	function buildmap(instr:String):Void{
-		var pie:Array = instr.split("#");
+		var pie:Array<String> = instr.split("#");
 		if (pie.length==3) {
 			anitileList = new Array();
 			warpGates = new Array();
 			largerthanView = [];
 			warptlist.removeAll();
 			//
-			var head:Array = pie[0].split(",");
-			columns = head[0];
-			rows = head[1];
-			fillcolour = head[2];
+			var head:Array<String> = pie[0].split(",");
+			columns = Std.parseInt(head[0]);
+			rows = Std.parseInt(head[1]);
+			fillcolour = Std.parseInt(head[2]);
 			if(fillcolour < 10000 && fillcolour != 0){
 				fillcolour = 0;
-				bgfill = head[2];
+				bgfill = Std.parseInt(head[2]);
 			}
 			
-			//
+			// map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 			map = pie[1].split("&");
 			for ( i in 0...map.length) {
 				map[i] = map[i].split("|");
