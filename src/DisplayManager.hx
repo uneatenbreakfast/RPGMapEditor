@@ -707,15 +707,17 @@ class DisplayManager extends MainStageMC
 
 		skybuffer.fillRect(bufferBD.rect,fillcolour);
 		
-		var tileList1:Array<DrawObject> = new Array<DrawObject>();
+		var tileList1:Array<Array<DrawObject>> = new Array<Array<DrawObject>>();
 		if (layer0visi) {
 			tileList1 = listLoop(0,runonce,yst,yend,colstart,colend);
 			//theloop(0,runonce,yst,yend,colstart,colend);
 		}
 		if (layer1visi) {
 
-			var tileList2:Array<DrawObject> = listLoop(1,runonce,yst,yend,colstart,colend);
-			tileList1= tileList1.concat( tileList2[1]);
+			var tileList2:Array<Array<DrawObject>> = listLoop(1,runonce,yst,yend,colstart,colend);
+			tileList1 = tileList1.concat( tileList2[1]);
+			
+			
 			tileList2 = tileList2[0];
 			
 			var extendList:Array<DrawObject> = listExtensions(yst,yend,colstart,colend);	
@@ -927,7 +929,7 @@ class DisplayManager extends MainStageMC
 		return dlist;
 	}
 
-	private function listLoop(layer:Int,runonce:Bool,yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
+	private function listLoop(layer:Int,runonce:Bool,yst:Int,yend:Int,colstart:Int,colend:Int):Array<Array<DrawObject>> {
 		var dlist:Array<DrawObject> = new Array<DrawObject>();
 		var sendtobot:Array<DrawObject> = new Array<DrawObject>();
 		var ob:DrawObject;
@@ -1000,10 +1002,12 @@ class DisplayManager extends MainStageMC
 				}
 			}
 		}
-		if(layer==1){
-			return [dlist,sendtobot];
-		}else{
-			return dlist;
+		if (layer == 1) {
+			var r:Array<Array<DrawObject>> = [dlist, sendtobot];
+			return r;
+		}else {
+			var r2:Array<Array<DrawObject>> = [dlist];
+			return r2;
 		}
 	}
 

@@ -12,8 +12,8 @@ class DrawObject
 	public var bitmapData:BitmapData;
 	public var width:Float;
 	public var height:Float;
-	public var xoff:Int;
-	public var yoff:Int;
+	public var xoff:Float;
+	public var yoff:Float;
 	
 	public function new() 
 	{
