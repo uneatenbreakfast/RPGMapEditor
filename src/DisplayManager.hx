@@ -252,7 +252,7 @@ class DisplayManager extends MainStageMC
 
 	function showSheets2():Void{	
 		if (!showingSheet) {
-			if(!mySpriteSheet){
+			if(mySpriteSheet != null){
 				showingSheet = true;
 				mySpriteSheet = new ShowSpriteSheets();
 				mySpriteSheet.x = 1238;
@@ -285,11 +285,18 @@ class DisplayManager extends MainStageMC
 			}
 			
 			// map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
-			map = pie[1].split("&");
-			for ( i in 0...map.length) {
-				map[i] = map[i].split("|");
-				for (o in 0...map[i].length) {
-					map[i][o] = map[i][o].split(":");
+			//map = pie[1].split("&");
+			var mapA:Array<String> = pie[1].split("&");
+			for ( i in 0...mapA.length) {
+				//map[i] = map[i].split("|");
+				var mapB:Array<String> = mapA[i].split("|");
+				for (o in 0...mapB[i].length) {
+					//map[i][o] = mapB[i][o].split(":");
+					var mapC:Array<String> = mapB[o].split(":");
+					
+					for (j in 0...mapC[o].length) {
+						map[i][o][j] = Std.parseInt(mapC[j]);
+					}
 				}
 			}
 			
@@ -316,7 +323,7 @@ class DisplayManager extends MainStageMC
 	}
 	
 	
-	private var ignoreList:Array<Int> = [Omni.BUTTERFLY];//tiles to ignore
+	private var ignoreList:Array<Int> = [ Omni.BUTTERFLY ];//tiles to ignore
 	function extendTilesLoop(layer:Int):Void{
 		for (i in 0...rows) {
 			for (o in 0...columns) {
@@ -505,7 +512,7 @@ class DisplayManager extends MainStageMC
 							
 							
 							var key:Int = selectedtile;
-							if(!func.isiteminarray(ignoreList,key)){
+							if(!Func.isiteminarray(ignoreList,key)){
 								var dtile = tilenum[key];
 								if (dtile.extendsStandardTile) {//if (tiledic[dtile][7]) {
 									var sWidth:Float = dtile.width; // tilenum[key][8];
@@ -571,14 +578,15 @@ class DisplayManager extends MainStageMC
 			var ww:Int = 0;
 			if(map[dy] != null && map[dy][dx]!=null){
 				if( map[dy][dx][0] != 0){
-					ww = tilenum[ map[dy][dx][0] ][6];
+					//ww = tilenum[ map[dy][dx][0] ][6];
+					ww = tilenum[ map[dy][dx][0] ].walkType;
 				}
 			}
 			
-			tile_0.text = String(map[dy][dx][0]+" w:"+ww);
-			tile_1.text = String(map[dy][dx][1]);
-			tile_2.text = String(map[dy][dx][2]);
-			tile_3.text = String(map[dy][dx][3]);
+			tile_0.text = map[dy][dx][0]+" w:"+ww;
+			tile_1.text = map[dy][dx][1]+"";
+			tile_2.text = map[dy][dx][2]+"";
+			tile_3.text = map[dy][dx][3]+"";
 			
 
 			//
@@ -597,8 +605,8 @@ class DisplayManager extends MainStageMC
 		var bitm:Bitmap = new Bitmap(bit);
 		
 		phantomtile.addChild(bitm);
-		phantomtile.xoffset = tilenum[selectedtile][1];
-		phantomtile.yoffset = tilenum[selectedtile][2];
+		phantomtile.xoffset = tilenum[selectedtile].xoffset;
+		phantomtile.yoffset = tilenum[selectedtile].yoffset;
 		
 		groundclip.addChild(phantomtile);
 	}
@@ -637,8 +645,8 @@ class DisplayManager extends MainStageMC
 	function mouseCamScroll(e:Event):Void{
 		if (stage.mouseY<400 && !cineEditMode) {
 			if (stage.mouseX > 900-100  && cam_point.x<(columns * tileWidth)-screenWidth && stage.mouseX<900) {
-				var rp:Number = (100-(900-stage.mouseX))/100;
-				var rs:Int = 15* rp;
+				var rp:Float = (100-(900-stage.mouseX))/100;
+				var rs:Int = Std.int(15* rp);
 				cam_point.x += rs;
 				if (cam_point.x>(columns * tileWidth)-screenWidth) {
 					cam_point.x = (columns * tileWidth)-screenWidth;
@@ -646,8 +654,8 @@ class DisplayManager extends MainStageMC
 				resetBitmap();
 			} else if (stage.mouseX < 100 && cam_point.x>0) {
 				//window move left
-				var lp:Number = (100-stage.mouseX)/100;
-				var ls:Int = 15* lp;
+				var lp:Float = (100-stage.mouseX)/100;
+				var ls:Int = Std.int(15* lp);
 				cam_point.x -= ls;
 				if (cam_point.x<0) {
 					cam_point.x = 0;
@@ -883,7 +891,7 @@ class DisplayManager extends MainStageMC
 
 	private function listWalkable(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
 		var dlist:Array<DrawObject> = new Array<DrawObject>();
-		var sendtobot:Array = new Array<DrawObject>();
+		var sendtobot:Array<DrawObject> = new Array<DrawObject>();
 		var ob:DrawObject;
 		var numKey:Int;
 		var key:Int;
@@ -892,8 +900,8 @@ class DisplayManager extends MainStageMC
 		var pPoint:Point = new Point();
 		var rRect:Rectangle = new Rectangle(0,0,0,0);
 		
-		var campointx:Int = cam_point.x;
-		var campointy:Int = cam_point.y;
+		var campointx:Int = Std.int(cam_point.x);
+		var campointy:Int = Std.int(cam_point.y);
 		
 		for (z in yst...(yend+1)) {
 			if (z>=0) {
@@ -1184,7 +1192,7 @@ class DisplayManager extends MainStageMC
 				if(cam_point.x>tileWidth){
 					cam_point.x -=tileWidth;
 				}
-				for (i in 0...rowss) {
+				for (i in 0...rows) {
 					map[i].pop();
 				}
 
