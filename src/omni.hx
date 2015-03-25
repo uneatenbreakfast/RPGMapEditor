@@ -7,47 +7,15 @@ class Omni {
 	// Player
 	public static var username:String = "ZELD";
 	public static var money:Int = 0;
-	public static var userStats:Object = {};
-	public static var inventory:Array = [];
-	public static var classStore:Array = [];
-	
-	// Game World Vars
-	public static var currentArea:String 	= "";
-	public static var overWorldDL:Array 	= [];
-	public static var speechBubbles:Array 	= [];
-	public static var otherclipsDL:Array 	= [];
-	public static var nameclips:Array 		= [];
-	public static var contactAreas:Array	= [];
-	
-	public static var windisOn:Bool 		= false;
-	public static var bufferList:Array 		= [];
-	public static var itemInfoList:Array 	= [];//0=>type , 1=> DESC , 2=> STATS
-												//0 => weapon
-												//1 => Food
-												//2 => Lacrima
-												//3 => armour
-												//4 => pants
-												//5 => shoes
-												//6 => trap
-												//7 => no-use/equip
-	
-	//PVP
-	public static var playerList:Array 		= [];
+	//public static var userStats:Object = {};
 
-	// Quest Vars
-	public static var questlog:Array 		= [];
-		
-	public static var cineKey:Int;
-	
-	public static var speechlog:Array 		= [];
-	public static var openedchestlog:Array 	= []; //["area] = [row y,col x];
 	
 	// System
 	public static var animationBusy:Bool 	= false;// Person animation?
 	public static var systemBusy:Bool 		= false;// Menu panels
 	public static var cinematicBusy:Bool 	= false;// Menu Animation
 	public static var MovieBusy:Bool 		= true;// Grand Stopper + battlescene
-	public static var needLoad:Array 		= [];
+
 	public static var slowcomputer:Bool		= false;
 	
 	public static var cineEditor:Bool		= false;
@@ -84,7 +52,7 @@ class Omni {
 	
 	public inline static var BITSPACE:Int 				= 75;
 	
-	public static var FullrenderList:Array = [];	//[cliplinkage , isLoop ]
+	public static var FullrenderList:Array<Array<Dynamic>> = new Array<Array<Dynamic>>();	//[cliplinkage , isLoop ]
 		
 		
 
@@ -129,7 +97,7 @@ class Omni {
 	public inline static var CHAREPALM:Int				= 34;	
 	
 	public function new ():Void {
-		questlog[""] = 0;
+		//questlog[""] = 0;
 		
 		//
 		FullrenderList[0] = ["stand",				true];
@@ -169,18 +137,7 @@ class Omni {
 		FullrenderList[34] = ["placesummonAni",		false];
 	}
 	
-	public static function getBitKey(appf:Object):String{
-		var hair:String = appf.hair;
-		var armour:String = appf.armour;
-		var pants:String = appf.pants;
-		var shoes:String = appf.shoes;
-		var facemask:String = appf.facemask;
-		var hat:String = appf.hat;
-		var scarf:String = appf.scarf;
-		var faceshape:Int  = appf.faceshape;
-		
-		return "bt_"+hair+armour+pants+shoes+facemask+hat+scarf+faceshape;
-	}
+
 	
 	
 	//
