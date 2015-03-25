@@ -29,6 +29,12 @@ class DisplayManager extends MainStageMC
 	private var saveMapManager:SaveMapManager;
 	private var tileManager:TileManager;
 	
+	// take from TileManager
+	private var tilebitdata:Map<Int, BitmapData>;
+	private var tilenum:Map<Int, TileObject>;
+	private var spriteSheetSprites:Map<String, BitmapData>;	
+	//
+	
 	private var TileSet:Bool = false;
 	//
 	private var bufferRect:Rectangle = new Rectangle(-tileWidth,-tileHeight,screenWidth+(2* tileWidth),400+(2* tileHeight));
@@ -39,9 +45,9 @@ class DisplayManager extends MainStageMC
 	private var map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
 	private var warpGates:Array<Array<Dynamic>> = new Array<Array<Dynamic>>();
-	//
-	//private var spriteSheetSprites:Array<Dynamic> = new Array<Dynamic>();
-	private var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
+	
+	
+
 	//
 	private var pressKeys:Map<Int, Bool> = new Map<Int, Bool>();
 	
@@ -106,8 +112,6 @@ class DisplayManager extends MainStageMC
 	
 	
 	
-	private var tilebitdata:Map<Int, BitmapData>;
-	private var tilenum:Map<Int, TileObject>;
 	
 	
 	public static function getInstance():DisplayManager {
@@ -137,9 +141,9 @@ class DisplayManager extends MainStageMC
 		
 		tilebitdata = tileManager.tilebitdata;
 		tilenum = tileManager.tilenum;
+		spriteSheetSprites = tileManager.spriteSheetSprites;
 		
 		//
-		
 		groundclip.addChild(canvasBitmap);
 		skyclip.addChild(skyBitmap);
 		hero.x = 400;

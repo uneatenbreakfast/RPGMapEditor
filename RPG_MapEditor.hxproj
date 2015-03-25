@@ -8,8 +8,8 @@
     <movie fps="30" />
     <movie width="1800" />
     <movie height="1000" />
-    <movie version="3" />
-    <movie minorVersion="1" />
+    <movie version="4" />
+    <movie minorVersion="0" />
     <movie platform="AIR" />
     <movie background="#FFFFFF" />
   </output>

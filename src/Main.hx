@@ -24,7 +24,9 @@ class Main extends Sprite
 				
 		var keyboardManager:KeyBoardManager = KeyBoardManager.getInstance();
 		var displayManager:DisplayManager = DisplayManager.getInstance();
+		
 		var tileManager:TileManager = TileManager.getInstance();
+		tileManager.init();
 		
 		this.addChild(displayManager);
 		

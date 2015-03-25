@@ -1,9 +1,7 @@
 package ;
-
 import flash.display.MovieClip;
 import flash.display.Sprite;
 import flash.display.DisplayObject;
-
 import flash.events.Event;
 import flash.geom.Matrix;
 import flash.geom.Point;
@@ -18,8 +16,9 @@ import fl.motion.Color;
 import flash.geom.ColorTransform;
 import flash.filters.*;
 import admin.MyLoader;
-//import omni;
 import Maps;
+import flash.system.Worker;
+import flash.system.WorkerDomain;
 
 class TileManager extends Sprite
 {
@@ -43,7 +42,7 @@ class TileManager extends Sprite
 	public var warpGates:Array<Dynamic> = new Array<Dynamic>();
 	//
 	//private var spriteSheetSprites:Array<Dynamic> = new Array<Dynamic>();
-	private var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
+	public var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
 	//
 	private var pressKeys:Object = {};
 	private var isBusy:Bool = false;
@@ -71,7 +70,6 @@ class TileManager extends Sprite
 	private var spriteSheets:Array<Dynamic> = new Array<Dynamic>();
 
 	// LOAD THE TILESET
-	private var req4:URLRequest;
 	private var TileSetL:MyLoader;
 	// LOAD THE TILESET
 
@@ -84,19 +82,22 @@ class TileManager extends Sprite
 	public function new() :Void
 	{			
 		super();
-		
 		displayManager = DisplayManager.getInstance();
-		var req4:URLRequest = new URLRequest("TileSets.swf");
-		TileSetL = new MyLoader(req4, "TileSet");
-		TileSetL.addEventListener("LoadDone", Engine); // Once loaded; initiate the bitmap creation Engine
-	}	
-	
+	}		
 	public static function getInstance():TileManager {
 		if (thisManager == null) {
 			thisManager = new TileManager();
 		}
 		return thisManager;
 	}
+	
+	public function init():Void {
+		// load the SWF file
+		var req4:URLRequest = new URLRequest("TileSets.swf");
+		TileSetL = new MyLoader(req4, "TileSet");
+		TileSetL.addEventListener("LoadDone", Engine); // Once loaded; initiate the bitmap creation Engine
+	}
+
 	
 	private function Engine(evC:Event):Void {
 		//for (i in Maps.gm_maps) {
@@ -107,6 +108,15 @@ class TileManager extends Sprite
 		//spriteSheetWalkables = MovieClip(TileSetL.loader.content).spriteSheetWalkables;
 		//spriteSheets = MovieClip(TileSetL.loader.content).spriteSheets;
 		//tilesets = MovieClip(TileSetL.loader.content).tilesets;
+		
+		
+		 // create the background worker
+	   var workerBytes:MovieClip = TileSetL.loader.content;
+	   var bgWorker:Worker = WorkerDomain.current.createWorker(workerBytes);
+	   bgWorker.addEventListener(Event.WORKER_STATE, function() { trace("HI"); } );
+	   bgWorker.start();
+	   
+	   
 		
 		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );

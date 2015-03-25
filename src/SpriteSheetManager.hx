@@ -9,27 +9,30 @@ import flash.text.TextField;
  */
 class SpriteSheetManager extends ShowSpriteSheets
 {
+	/*
+	var pressD:Bool = false;
+	var startArr:Array = new Array();
+	var stopArry:Array = new Array();
+	var stnum:Int = MovieClip(root).spriteSheets[0][1];
+	var preV:String;
 
+	var selector = new SelectorCD();
+	var widther:Class = MovieClip(root).spriteSheets[0][0];
+	//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
+	var spriteWidth:Int = MovieClip(root).tiledic[widther][8];
+	var spriteHeight:Int = MovieClip(root).tiledic[widther][9];
+	//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
+	//trace("spriteWxxxxidth:",spriteWidth, spriteHeight);
+	var sel_spritesheet:Int;
+	var sel_spritesheetlab:Class;
+
+	var cellwid:int = 140;
+	var h:int = Math.floor(symbo.height / 20);
+	*/
 	public function new() 
 	{
-		var pressD:Boolean = false;
-		var startArr:Array = new Array();
-		var stopArry:Array = new Array();
-		var stnum:int = MovieClip(root).spriteSheets[0][1];
-		var preV:String;
-
-		var selector = new SelectorCD();
-		var widther:Class = MovieClip(root).spriteSheets[0][0];
-		//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
-		var spriteWidth:int = MovieClip(root).tiledic[widther][8];
-		var spriteHeight:int = MovieClip(root).tiledic[widther][9];
-		//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
-		//trace("spriteWxxxxidth:",spriteWidth, spriteHeight);
-		var sel_spritesheet:int;
-		var sel_spritesheetlab:Class;
-
-		var cellwid:int = 140;
-		var h:int = Math.floor(symbo.height/20);
+		super();
+		/*
 		for (var i in MovieClip(root).spriteSheets) {
 			var df:TextFormat = new TextFormat();
 			df.font = "Arial";
@@ -69,9 +72,9 @@ class SpriteSheetManager extends ShowSpriteSheets
 		sheetholder.addEventListener(MouseEvent.MOUSE_MOVE,fol);
 
 		graybak.addEventListener(MouseEvent.MOUSE_DOWN,stDrag);
-		graybak.addEventListener(MouseEvent.MOUSE_UP,stopxDrag);
+		graybak.addEventListener(MouseEvent.MOUSE_UP,stopxDrag);*/
 	}
-		
+		/*
 	
 	function itemChange(e:MouseEvent):Void {
 		sel_spritesheet = e.currentTarget.data;
@@ -231,5 +234,5 @@ class SpriteSheetManager extends ShowSpriteSheets
 			selector.height = rows*50;
 			//
 		}
-	}
+	}*/
 }
