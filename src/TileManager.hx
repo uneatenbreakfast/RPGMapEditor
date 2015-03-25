@@ -29,6 +29,7 @@ class TileManager extends Sprite
 	
 	private var stageManager:Main;
 	private var displayManager:DisplayManager;
+	public static var thisManager:TileManager;
 	
 	private var TileSet:Bool = false;
 	//
@@ -39,7 +40,7 @@ class TileManager extends Sprite
 	private var rows:Int = 8;
 	private var map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
-	private var warpGates:Array<Dynamic> = new Array<Dynamic>();
+	public var warpGates:Array<Dynamic> = new Array<Dynamic>();
 	//
 	//private var spriteSheetSprites:Array<Dynamic> = new Array<Dynamic>();
 	private var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
@@ -61,8 +62,8 @@ class TileManager extends Sprite
 	private var tilenumLength:Int = 0;
 	private var mySpriteSheet:ShowSpriteSheets;
 	//
-	private var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
-	private var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
+	public var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
+	public var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
 	private var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
 	
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
@@ -74,44 +75,28 @@ class TileManager extends Sprite
 	private var TileSetL:MyLoader;
 	// LOAD THE TILESET
 
-	private var groundclip:MovieClip = new MovieClip();
-	private var skyclip:MovieClip = new MovieClip();
-	private var canvasBD:BitmapData;
-	private var bufferBD:BitmapData;
-	private var skyBD:BitmapData;
-	private var skybuffer:BitmapData;
-		//
-	private var tmpBit:BitmapData;
-	private var tmpBit2:BitmapData;
-
-	private var canvasBitmap:Bitmap;
-	private var skyBitmap:Bitmap;
-		
-	private var layer0visi:Bool = true;
-	private var layer1visi:Bool = true;
-	private var layer2visi:Bool = true;
-	private var layer3visi:Bool = true;
-	private var walklayervisi:Bool = false;
-	private var hero:MovieClip = new MovieClip();
-		
+	
 	private var partofSheet:Array<Dynamic> = [];
 	private var largerthanView:Array<Dynamic> = [];
 	private var saveBusy:Bool = false;
-	
-	
-	
-	public var currentmap:String;
 	
 
 	public function new() :Void
 	{			
 		super();
-		displayManager = DisplayManager.getInstance();
 		
+		displayManager = DisplayManager.getInstance();
 		var req4:URLRequest = new URLRequest("TileSets.swf");
 		TileSetL = new MyLoader(req4, "TileSet");
-		TileSetL.addEventListener("LoadDone",Engine); // Once loaded; initiate the bitmap creation Engine
+		TileSetL.addEventListener("LoadDone", Engine); // Once loaded; initiate the bitmap creation Engine
 	}	
+	
+	public static function getInstance():TileManager {
+		if (thisManager == null) {
+			thisManager = new TileManager();
+		}
+		return thisManager;
+	}
 	
 	private function Engine(evC:Event):Void {
 		//for (i in Maps.gm_maps) {
@@ -321,7 +306,11 @@ class TileManager extends Sprite
 			}
 		}
 		
-		rebuildmap(rows,columns,"newmap_"+Math.round(Math.random()* 99));
+
+		
+		
+		//
+		displayManager.turnOn();
 	}
 	
 	
@@ -424,26 +413,6 @@ class TileManager extends Sprite
 		}
 	}
 
-	private function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
-		currentmap = newmapname;
-		//curmap.text = "Current Map :"+currentmap;
-			
-		map = new Array<Array<Array<Int>>>();
-		rows = rownum;
-		columns = columnnum;
-		for (p in 0...rows) {
-			map[p]= new Array<Array<Int>>();
-			for (i in 0...columns) {
-				map[p][i] = [0,0,0,0];
-			}
-		}
-		anitileList = new Array();
-		warpGates = new Array();
-		//warptlist.removeAll();
-		
-		//resetBitmap(true);
-		isBusy = false;
-	}
 	
 	
 

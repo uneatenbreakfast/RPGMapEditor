@@ -10,6 +10,7 @@ import flash.events.KeyboardEvent;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.display.BitmapData;
+import flash.Lib;
 import Omni;
 /**
  * ...
@@ -26,6 +27,7 @@ class DisplayManager extends MainStageMC
 	
 	private var stageManager:Main;
 	private var saveMapManager:SaveMapManager;
+	private var tileManager:TileManager;
 	
 	private var TileSet:Bool = false;
 	//
@@ -36,7 +38,7 @@ class DisplayManager extends MainStageMC
 	private var rows:Int = 8;
 	private var map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
-	private var warpGates:Array<Dynamic> = new Array<Dynamic>();
+	private var warpGates:Array<Array<Dynamic>> = new Array<Array<Dynamic>>();
 	//
 	//private var spriteSheetSprites:Array<Dynamic> = new Array<Dynamic>();
 	private var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
@@ -59,27 +61,9 @@ class DisplayManager extends MainStageMC
 	private var cam_point:Point = new Point(0,0);
 	private var lastviewpoint:Point = new Point(0,0);
 	private var tilenumLength:Int = 0;
-	private var mySpriteSheet:ShowSpriteSheets;
+	
+	private var mySpriteSheet:SpriteSheetManager;
 	//
-	private var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
-	private var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();
-	//tilenum[key] = [class/string, xoffset, yoffset, sendtoGround,[animation,nonLoop],]
-
-	/*
-	 * tilenum[key][0] = e;//Class/String
-	 * tilenum[key][3] = tiledic[e][3];//sendtoGround
-	 * tilenum[key][4] = new Array();
-	 * tilenum[key][4][0] = tiledic[e][4][0];//Animation
-	 * tilenum[key][4][1] = tiledic[e][4][1];//nonLoop
-	 * tilenum[key][4][2] = tiledic[e][4][2];//afterAnimationif_nonLoop
-	 * tilenum[key][4][3] = tiledic[e][4][3];//syncTile
-	 * tilenum[key][5] = 1;//totalframes
-	 * tilenum[key][6] = tiledic[e][6];//walkType
-	 * tilenum[key][7] = tiledic[e][7];//Extends standardTile
-	 * tilenum[key][8] = tiledic[e][8];//width
-	 * tilenum[key][9] = tiledic[e][9];//height
-	 * tilenum[key][10] = tiledic[e][11];//depthpoint:int
-	 */
 	
 	
 	
@@ -116,9 +100,15 @@ class DisplayManager extends MainStageMC
 	public var currentmap:String;
 	
 	private var visibleLayer:Array<Bool> = [false, false, false, false]; //	this["layer"+num+"visi"]
-
+	
 	
 	private inline static var tileNumSpacer:String = "00";
+	
+	
+	
+	private var tilebitdata:Map<Int, BitmapData>;
+	private var tilenum:Map<Int, TileObject>;
+	
 	
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
@@ -130,7 +120,6 @@ class DisplayManager extends MainStageMC
 	public function new() :Void
 	{			
 		super();
-		saveMapManager = SaveMapManager.getInstance();
 		
 		canvasBD = new BitmapData(900,400,false,0x333333);
 		bufferBD = new BitmapData(900+(2* tileWidth),400+(2* tileHeight),false,0x333333);
@@ -140,14 +129,16 @@ class DisplayManager extends MainStageMC
 		tmpBit = new BitmapData(bufferBD.width, bufferBD.height, false, fillcolour);
 		canvasBitmap = new Bitmap(canvasBD);
 		skyBitmap = new Bitmap(skyBD);
-
-		// Housekeeping
-		//walk_eye.gotoAndStop(2);
 	}
 	
-	function Engine(e:Event):Void{
-
-		toolsbench.mask = toolscover;
+	public function turnOn():Void{
+		saveMapManager = SaveMapManager.getInstance();
+		tileManager = TileManager.getInstance();
+		
+		tilebitdata = tileManager.tilebitdata;
+		tilenum = tileManager.tilenum;
+		
+		//
 		
 		groundclip.addChild(canvasBitmap);
 		skyclip.addChild(skyBitmap);
@@ -158,7 +149,17 @@ class DisplayManager extends MainStageMC
 		addChild(hero);
 		addChild(skyclip);
 		//addChild(new fpsBox(stage,0,400));
-		//
+		//-----
+		
+		toolsbench.mask = toolscover;
+		toolsbench.x = 0;
+		toolsbench.y = stage.stageHeight - toolsbench.height;
+		
+		
+		// Housekeeping
+		//walk_eye.gotoAndStop(2);
+		
+		//------
 		stage.addEventListener(MouseEvent.MOUSE_DOWN,startplacetile);
 		stage.addEventListener(MouseEvent.MOUSE_UP,stopplacetile);
 		stage.addEventListener(MouseEvent.MOUSE_MOVE,ghosttile);
@@ -201,8 +202,8 @@ class DisplayManager extends MainStageMC
 		currentmap = newmapname;
 		//curmap.text = "Current Map :"+currentmap;
 			
-		/*map = new Array<Array<Array<Int>>>();
-		//rows = rownum;
+		map = new Array<Array<Array<Int>>>();
+		rows = rownum;
 		columns = columnnum;
 		for (p in 0...rows) {
 			map[p]= new Array<Array<Int>>();
@@ -212,9 +213,8 @@ class DisplayManager extends MainStageMC
 		}
 		anitileList = new Array();
 		warpGates = new Array();
-		//warptlist.removeAll();
+		warptlist.removeAll();
 		
-		*/
 		resetBitmap(true);
 		isBusy = false;
 	}
@@ -258,11 +258,11 @@ class DisplayManager extends MainStageMC
 		showSheets2();
 	}
 
-	function showSheets2():Void{	
+	private function showSheets2():Void{	
 		if (!showingSheet) {
-			if(mySpriteSheet != null){
+			if(mySpriteSheet == null){
 				showingSheet = true;
-				mySpriteSheet = new ShowSpriteSheets();
+				mySpriteSheet = new SpriteSheetManager ();
 				mySpriteSheet.x = 1238;
 				mySpriteSheet.y = 306;
 				addChild(mySpriteSheet);
@@ -279,7 +279,7 @@ class DisplayManager extends MainStageMC
 		var pie:Array<String> = instr.split("#");
 		if (pie.length==3) {
 			anitileList = new Array<Dynamic>();
-			warpGates = new Array<Dynamic>();
+			warpGates = new Array<Array<Dynamic>>();
 			largerthanView = [];
 			warptlist.removeAll();
 			//
@@ -308,14 +308,29 @@ class DisplayManager extends MainStageMC
 				}
 			}
 			
-			warpGates = pie[2].split("&");
-			for (s in 0...warpGates.length) {
-				warptlist.addItem({label:s});
-				warpGates[s] = warpGates[s].split(":");
-				warpGates[s][3] = warpGates[s][3].split("|");
+			
+			warpGates = new Array<Array<Dynamic>>();
+			
+			//warpGates = pie[2].split("&");
+			var allWarpGates:Array<String> = pie[2].split("&");
+			
+			for (s in 0...allWarpGates.length) {
+				warptlist.addItem( { label:s } );
 				
-				for(t in 0...warpGates[s][3]){
-					warpGates[s][3][t] = warpGates[s][3][t].split(",");
+				//warpGates[s] = allWarpGates[s].split(":");
+				var gates:Array<String> = allWarpGates[s].split(":");
+				warpGates[s][0] = Std.parseInt(gates[0]);
+				warpGates[s][1] = Std.parseInt(gates[1]);
+				warpGates[s][2] = gates[2];// [2] is a string - town name
+				warpGates[s][3] = new Array<Point>();
+				
+				//warpGates[s][3] = allWarpGates[s][3].split("|");
+				var wLocs:Array<String> = gates[3].split("|");
+				
+				for (t in 0...wLocs.length) {
+					var xy:Array<String> = wLocs[t].split(",");
+					var p:Point = new Point(Std.parseInt(xy[0]), Std.parseInt( xy[1]) );
+					warpGates[s][3].push(p);
 				}
 			}
 			
@@ -328,6 +343,50 @@ class DisplayManager extends MainStageMC
 			resetBitmap(true);		
 		}
 		isBusy = false;
+	}
+	private function outputSTR():String{
+		var strmap:String;
+		
+		var fv:Int = fillcolour;
+		if(bgfill!=0){
+			fv = bgfill;
+		}  
+		
+		strmap = columns+","+rows+","+fv+"#";
+		for (p in 0...rows) {
+			for( i in 0...columns) {
+				strmap += map[p][i][0]+":";
+				strmap += map[p][i][1]+":";
+				strmap += map[p][i][2]+":";
+				strmap += map[p][i][3];
+				if (i != columns-1) {
+					strmap +="|";
+				}
+			}
+			if (p!=rows-1) {
+				strmap +="&";
+			}
+		}
+		strmap += "#";
+			
+		for (s in 0...warpGates.length) {
+			strmap += warpGates[s][0] + ":";
+			strmap += warpGates[s][1] + ":";
+			strmap += warpGates[s][2] + ":";
+			for(t in 0...warpGates[s][3].length){
+				strmap += warpGates[s][3][t][0];
+				strmap += ",";
+				strmap += warpGates[s][3][t][1];
+				
+				if (t!=warpGates[s][3].length-1) {
+					strmap +="|";
+				}
+			}
+			if (s!=warpGates.length-1) {
+				strmap +="&";
+			}
+		}
+		return strmap;
 	}
 	
 	
@@ -367,17 +426,17 @@ class DisplayManager extends MainStageMC
 		nullColour.setTint(0xFFFFFF, 0);
 		toolsbench.activelaybut.transform.colorTransform = nullColour;
 		//
-		var nowlayer:Int;
+		var nowlayer:Int = 0;
 		switch (e.target) {
-			case toolsbench.bg0 :
+			case x if(x == toolsbench.bg0) :
 				nowlayer=0;
-			case toolsbench.bg1 :
+			case x if(x == toolsbench.bg1) :
 				nowlayer=1;
-			case toolsbench.bg2 :
+			case x if(x == toolsbench.bg2) :
 				nowlayer=2;
-			case toolsbench.bg3 :
+			case x if(x == toolsbench.bg3) :
 				nowlayer=3;
-			case toolsbench.obis:
+			case x if(x == toolsbench.obis):
 				nowlayer = 4;
 		}
 		activelayer = nowlayer;
@@ -387,18 +446,18 @@ class DisplayManager extends MainStageMC
 		cTint.setTint(0xFFFFFF, 1);
 		e.target.transform.colorTransform = cTint;
 	}
-	function setvisi(e:MouseEvent):Void{
-		var num:Int;
+	private function setvisi(e:MouseEvent):Void{
+		var num:Int = 0;
 		switch (e.target) {
-			case toolsbench.on0 :
+			case x if(x == toolsbench.on0) :
 				num = 0;
-			case toolsbench.on1 :
+			case x if(x == toolsbench.on1) :
 				num=1;
-			case toolsbench.on2 :
+			case x if(x == toolsbench.on2) :
 				num=2;
-			case toolsbench.on3 :
+			case x if(x == toolsbench.on3) :
 				num=3;
-			case toolsbench.walk_eye :
+			case x if(x == toolsbench.walk_eye) :
 				if(walklayervisi){// turn it off
 					e.target.gotoAndStop(2);
 					walklayervisi = false;
@@ -547,9 +606,14 @@ class DisplayManager extends MainStageMC
 	}
 	function removeGate(ey:Int,ex:Int):Void{
 		for (s in warpGates) {
-			for(t in 0...warpGates[s][3].length){//for(t in warpGates[s][3]){
+			/*for(t in 0...warpGates[s][3].length){//for(t in warpGates[s][3]){
 				if( warpGates[s][3][t][0]==ex && ey==warpGates[s][3][t][1]){
 					warpGates[s][3].splice(t,1);
+				}
+			}*/
+			for(t in 0...s[3].length){
+				if( s[3][t].x == ex && ey == s[3][t].y){
+					s[3].splice(t,1);
 				}
 			}
 		}
@@ -1093,8 +1157,11 @@ class DisplayManager extends MainStageMC
 					largerthanView[i][6] = (largerthanView[i][0] * tileHeight)-tt;		
 				}
 				for(sw in warpGates){
-					for(s in warpGates[sw][3]){
-						warpGates[sw][3][s][1]++;
+					//for(s in warpGates[sw][3]){
+					//	warpGates[sw][3][s][1]++;
+					//}
+					for(s in 0...sw[3].length){
+						sw[s][1]++;
 					}
 				}
 
@@ -1125,8 +1192,11 @@ class DisplayManager extends MainStageMC
 					largerthanView[i][5] = (largerthanView[i][1] * tileWidth)-tt;		
 				}
 				for(sw in warpGates){
-					for(s in warpGates[sw][3]){
-						warpGates[sw][3][s][0]++;
+					//for(s in warpGates[sw][3]){
+					//	warpGates[sw][3][s][0]++;
+					//}
+					for(s in 0...sw[3].length){
+						sw[s][0]++;
 					}
 				}
 				
@@ -1162,8 +1232,11 @@ class DisplayManager extends MainStageMC
 					largerthanView[i][6] = (largerthanView[i][0] * tileHeight)-tt;		
 				}
 				for(sw in warpGates){
-					for(s in warpGates[sw][3]){
-						warpGates[sw][3][s][1]--;
+					//for(s in warpGates[sw][3]){
+						//warpGates[sw][3][s][1]--;
+					//}
+					for(s in 0...sw[3].length){
+						sw[s][1]--;
 					}
 				}
 
@@ -1186,21 +1259,29 @@ class DisplayManager extends MainStageMC
 				restmap = true;
 				
 				for (i in 0...largerthanView.length) {
+					if (largerthanView[i] == null) {
+						continue; // object has been removed
+					}
 					tt = (largerthanView[i][1] * tileWidth)-largerthanView[i][5];	
 					largerthanView[i][1]--;
 					largerthanView[i][5] = (largerthanView[i][1] * tileWidth)-tt;
 					
 					if(largerthanView[i][1] < 0){
 						// remove the object from the largerthanView array
-						largerthanView.splice(i, 1 );
-						i--;
+						//largerthanView.splice(i, 1 );
+						//i--;
+						largerthanView[i] = null;
 					}
 				}
 								
-				for(sw in warpGates){
-					for(s in warpGates[sw][3]){
-						warpGates[sw][3][s][0]--;
+				for (sw in warpGates) {
+					for(s in 0...sw[3].length){
+						sw[s][0]--;
 					}
+					
+					//for(s in warpGates[sw][3]){
+					//	warpGates[sw][3][s][0]--;
+					//}
 				}
 
 			case 39 :

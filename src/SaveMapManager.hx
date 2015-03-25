@@ -99,50 +99,7 @@ class SaveMapManager
 		curmap.text = "Current Map : "+currentmap;
 		buildmap( maps.gm_maps[currentmap] );*/
 	}
-	private function outputSTR():String{
-		var strmap:String;
-		
-		var fv:Int = fillcolour;
-		if(bgfill!=0){
-			fv = bgfill;
-		}  
-		
-		strmap = columns+","+rows+","+fv+"#";
-		for (p in 0...rows) {
-			for( i in 0...columns) {
-				strmap += map[p][i][0]+":";
-				strmap += map[p][i][1]+":";
-				strmap += map[p][i][2]+":";
-				strmap += map[p][i][3];
-				if (i != columns-1) {
-					strmap +="|";
-				}
-			}
-			if (p!=rows-1) {
-				strmap +="&";
-			}
-		}
-		strmap += "#";
-			
-		for (s in 0...warpGates.length) {
-			strmap += warpGates[s][0] + ":";
-			strmap += warpGates[s][1] + ":";
-			strmap += warpGates[s][2] + ":";
-			for(t in 0...warpGates[s][3].length){
-				strmap += warpGates[s][3][t][0];
-				strmap += ",";
-				strmap += warpGates[s][3][t][1];
-				
-				if (t!=warpGates[s][3].length-1) {
-					strmap +="|";
-				}
-			}
-			if (s!=warpGates.length-1) {
-				strmap +="&";
-			}
-		}
-		return strmap;
-	}
+	
 
 	
 }
