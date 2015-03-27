@@ -9,29 +9,44 @@ import flash.text.TextField;
  */
 class SpriteSheetManager extends ShowSpriteSheets
 {
-	/*
-	var pressD:Bool = false;
-	var startArr:Array = new Array();
-	var stopArry:Array = new Array();
-	var stnum:Int = MovieClip(root).spriteSheets[0][1];
-	var preV:String;
+	private var tileManager:TileManager;
+	private var displayManager:DisplayManager;
+	
+	private var pressD:Bool = false;
+	private var startArr:Array<Int> = new Array<Int>();
+	private var stopArry:Array<Int> = new Array<Int>();
+	private var stnum:Int;
+	private var preV:String;
 
-	var selector = new SelectorCD();
-	var widther:Class = MovieClip(root).spriteSheets[0][0];
-	//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
-	var spriteWidth:Int = MovieClip(root).tiledic[widther][8];
-	var spriteHeight:Int = MovieClip(root).tiledic[widther][9];
-	//trace("widther:",widther, MovieClip(root).spriteSheets[0]);
-	//trace("spriteWxxxxidth:",spriteWidth, spriteHeight);
-	var sel_spritesheet:Int;
-	var sel_spritesheetlab:Class;
+	private var selector = new SelectorCD();
+	private var widther:String;// Class
 
-	var cellwid:int = 140;
-	var h:int = Math.floor(symbo.height / 20);
-	*/
+	private var spriteWidth:Int;
+	private var spriteHeight:Int;
+
+	private var sel_spritesheet:Int;
+	private var sel_spritesheetlab:String;// Class;
+	
+	private var cellwid:Int;
+	private var h:Int;
+	
 	public function new() 
 	{
 		super();
+		tileManager = TileManager.getInstance();
+		displayManager = DisplayManager.getInstance();
+		
+		stnum = displayManager.spriteSheets[0][1];
+		widther = displayManager.spriteSheets[0][0];
+
+		spriteWidth = Std.int(tileManager.tiledic[widther].width);// MovieClip(root).tiledic[widther][8];
+		spriteHeight =  Std.int(tileManager.tiledic[widther].height);// MovieClip(root).tiledic[widther][9];
+
+		cellwid = 140;
+		h = Math.floor(symbo.height / 20);		
+	}
+	public function init():Void {
+		
 		/*
 		for (var i in MovieClip(root).spriteSheets) {
 			var df:TextFormat = new TextFormat();

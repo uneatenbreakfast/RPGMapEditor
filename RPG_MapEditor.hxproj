@@ -8,8 +8,8 @@
     <movie fps="30" />
     <movie width="1800" />
     <movie height="1000" />
-    <movie version="4" />
-    <movie minorVersion="0" />
+    <movie version="3" />
+    <movie minorVersion="1" />
     <movie platform="AIR" />
     <movie background="#FFFFFF" />
   </output>
@@ -36,7 +36,7 @@
   </compileTargets>
   <!-- Assets to embed into the output SWF -->
   <library>
-    <asset path="lib\MapEditor_HaxeSWC.swc" />
+    <asset path="lib\MapEditorSWC.swc" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

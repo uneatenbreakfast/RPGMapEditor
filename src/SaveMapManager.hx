@@ -66,9 +66,9 @@ class SaveMapManager
 		//savefile();
 	}
 	function savefile():Void{	
-		var stufftobewritten:String = "package { \n	import flash.utils.Dictionary; \n	import omni; \n \n	public class maps { \n \n		public static  var gm_maps:Dictionary=new Dictionary(); \n";
+		/*var stufftobewritten:String = "package { \n	import flash.utils.Dictionary; \n	import omni; \n \n	public class maps { \n \n		public static  var gm_maps:Dictionary=new Dictionary(); \n";
 		//------
-		/*
+		
 		var bringback:String = currentmap;
 		gm_maps[currentmap] = maps.gm_maps[currentmap] = outputSTR();
 
@@ -98,6 +98,7 @@ class SaveMapManager
 		currentmap = bringback;
 		curmap.text = "Current Map : "+currentmap;
 		buildmap( maps.gm_maps[currentmap] );*/
+		trace("FIX UP SAVE TO FILE()");
 	}
 	
 

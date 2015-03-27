@@ -78,7 +78,7 @@ class DisplayManager extends MainStageMC
 	
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
 	private var tilesets:Array<Dynamic> = new Array<Dynamic>();
-	private var spriteSheets:Array<Dynamic> = new Array<Dynamic>();
+	
 
 	private var groundclip:MovieClip = new MovieClip();
 	private var skyclip:MovieClip = new MovieClip();
@@ -202,7 +202,7 @@ class DisplayManager extends MainStageMC
 	}
 	
 	
-	function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
+	private function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
 		currentmap = newmapname;
 		//curmap.text = "Current Map :"+currentmap;
 			

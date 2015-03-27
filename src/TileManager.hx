@@ -63,11 +63,13 @@ class TileManager extends Sprite
 	//
 	public var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
 	public var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
-	private var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
+	public var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
 	
+	public var spriteSheets:Array<Dynamic> = new Array<Dynamic>();//spriteSheets.push(["tl_grasslands",1])
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
 	private var tilesets:Array<Dynamic> = new Array<Dynamic>();
-	private var spriteSheets:Array<Dynamic> = new Array<Dynamic>();
+	
+	
 
 	// LOAD THE TILESET
 	private var TileSetL:MyLoader;
@@ -111,17 +113,19 @@ class TileManager extends Sprite
 		
 		
 		 // create the background worker
+		 /*
 	   var workerBytes:MovieClip = TileSetL.loader.content;
 	   var bgWorker:Worker = WorkerDomain.current.createWorker(workerBytes);
 	   bgWorker.addEventListener(Event.WORKER_STATE, function() { trace("HI"); } );
 	   bgWorker.start();
-	   
+	   */
 	   
 		
 		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
 		tilesets = cast (tileMovieClip.tilesets, Array<Dynamic> );
+		spriteSheets = cast (tileMovieClip.spriteSheets,Array<Dynamic> );
 		
 		// create the tiledic in Map for Haxe
 		for (i in tileKeysArr) {
