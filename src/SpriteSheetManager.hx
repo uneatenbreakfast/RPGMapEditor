@@ -1,8 +1,12 @@
 package ;
+import flash.display.Bitmap;
+import flash.display.BitmapData;
 import flash.display.MovieClip;
+import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.text.TextField;
-
+import flash.Lib;
+import flash.text.TextFormat;
 /**
  * ...
  * @author Nelson
@@ -30,14 +34,19 @@ class SpriteSheetManager extends ShowSpriteSheets
 	private var cellwid:Int;
 	private var h:Int;
 	
+	private var sheet:BitmapData;
+	private	var bitsheet:Bitmap;
+	private var follower:SelectorCD;
+	
 	public function new() 
 	{
 		super();
 		tileManager = TileManager.getInstance();
 		displayManager = DisplayManager.getInstance();
 		
-		stnum = displayManager.spriteSheets[0][1];
-		widther = displayManager.spriteSheets[0][0];
+		widther = tileManager.spriteSheets[0]; 			//spriteSheets.push(["tl_grasslands",1])
+		stnum = tileManager.tiledic[widther].key;		//spriteSheets.push(["tl_grasslands",1])
+		
 
 		spriteWidth = Std.int(tileManager.tiledic[widther].width);// MovieClip(root).tiledic[widther][8];
 		spriteHeight =  Std.int(tileManager.tiledic[widther].height);// MovieClip(root).tiledic[widther][9];
@@ -46,9 +55,8 @@ class SpriteSheetManager extends ShowSpriteSheets
 		h = Math.floor(symbo.height / 20);		
 	}
 	public function init():Void {
-		
-		/*
-		for (var i in MovieClip(root).spriteSheets) {
+		var inum:Int = 0;
+		for (i in tileManager.spriteSheets) {
 			var df:TextFormat = new TextFormat();
 			df.font = "Arial";
 			df.size = 12;
@@ -58,91 +66,93 @@ class SpriteSheetManager extends ShowSpriteSheets
 			tt.defaultTextFormat = df;
 			tt.height = 20;
 			tt.width = cellwid;
-			tt.text = MovieClip(root).spriteSheets[i][0];
-			sp.label = MovieClip(root).spriteSheets[i][0];
-			sp.data = MovieClip(root).spriteSheets[i][1];
+			tt.text = i;
+			sp.label = i;
+			sp.data = tileManager.tiledic[i].key;
 			sp.addChild(tt);
-			sp.x = symbo.x+ Math.floor(i/h) * cellwid;
-			sp.y = symbo.y+ (i - Math.floor(i/h) * h) * 20;
+			sp.x = symbo.x+ Math.floor(inum/h) * cellwid;
+			sp.y = symbo.y+ (inum - Math.floor(inum/h) * h) * 20;
 			sp.addEventListener(MouseEvent.CLICK, itemChange);
 			addChild(sp);
+			
+			inum++;
 		}
 
 		closebtt.addEventListener(MouseEvent.CLICK, closx);
 		
-		var sheet:BitmapData = MovieClip(root).spriteSheetSprites[MovieClip(root).spriteSheets[0][0]]
-		var bitsheet:Bitmap = new Bitmap(sheet);
+		sheet = tileManager.spriteSheetSprites[tileManager.spriteSheets[0]];
+		bitsheet = new Bitmap(sheet);
 		sheetholder.addChild(bitsheet);
 
-		var follower = new SelectorCD();
+		follower = new SelectorCD();
 		follower.alpha = .3;
 
-		sheetholder.addChild(follower)
-		sheetholder.addChild(selector)
+		sheetholder.addChild(follower);
+		sheetholder.addChild(selector);
 
-		resizeR()
+		resizeR();
 	//-----
-		sheetholder.addEventListener(MouseEvent.MOUSE_DOWN,dclick);
-		sheetholder.addEventListener(MouseEvent.MOUSE_UP,uclick);
-		sheetholder.addEventListener(MouseEvent.MOUSE_MOVE,fol);
+		sheetholder.addEventListener(MouseEvent.MOUSE_DOWN, dclick);
+		sheetholder.addEventListener(MouseEvent.MOUSE_UP, uclick);
+		sheetholder.addEventListener(MouseEvent.MOUSE_MOVE, fol);
 
-		graybak.addEventListener(MouseEvent.MOUSE_DOWN,stDrag);
-		graybak.addEventListener(MouseEvent.MOUSE_UP,stopxDrag);*/
+		graybak.addEventListener(MouseEvent.MOUSE_DOWN, stDrag);
+		graybak.addEventListener(MouseEvent.MOUSE_UP, stopxDrag);
+		
+		stage.addEventListener(KeyboardEvent.KEY_DOWN,nub);
+		//clist.addEventListener(Event.CHANGE, itemChange);
+		tileManager.showingSheet = true;
+		this.visible = true;
+		
+		if(sel_spritesheetlab != null){
+			changeSheet();
+		}
 	}
-		/*
+
 	
-	function itemChange(e:MouseEvent):Void {
+	private function itemChange(e:MouseEvent):Void {
 		sel_spritesheet = e.currentTarget.data;
 		sel_spritesheetlab = e.currentTarget.label;
 		
 		changeSheet();
 	}
-	function changeSheet():Void {
+	private function changeSheet():Void {
 		sheetholder.removeChild(bitsheet);
 		
-		sheet = MovieClip(root).spriteSheetSprites[sel_spritesheetlab]
+		sheet = tileManager.spriteSheetSprites[sel_spritesheetlab];
 		bitsheet = new Bitmap(sheet);
 		sheetholder.addChild(bitsheet);
 		
 		stnum = sel_spritesheet;
 		
-		var tmp:Class = sel_spritesheetlab;
-		spriteWidth = MovieClip(root).tiledic[tmp][8];
-		spriteHeight = MovieClip(root).tiledic[tmp][9];
+		var tmp:String = sel_spritesheetlab;
+		spriteWidth = Std.int(tileManager.tiledic[tmp].width); //[8];
+		spriteHeight = Std.int(tileManager.tiledic[tmp].height); //[9];
 		
 		resizeR();
 	}
 
-	function nub(e:KeyboardEvent):Void {
+	private function nub(e:KeyboardEvent):Void {
 		if (e.keyCode ==32) {
 			closx2();
 		}
 	}
 	
-	function closx(e:MouseEvent):Void {
+	private function closx(e:MouseEvent):Void {
 		closx2();
 	}
-	function closx2():Void {
+	private function closx2():Void {
 		//clist.removeEventListener(Event.CHANGE, itemChange);
 		stage.removeEventListener(KeyboardEvent.KEY_DOWN,nub);
-		MovieClip(root).showingSheet = false;
-		visible = false;
+		tileManager.showingSheet = false;
+		this.visible = false;
 	}
-	function showinit():Void{
-		stage.addEventListener(KeyboardEvent.KEY_DOWN,nub);
-		//clist.addEventListener(Event.CHANGE, itemChange);
-		MovieClip(root).showingSheet = true;
-		visible = true;
-		
-		if(sel_spritesheetlab){
-			changeSheet();
-		}
-	}
+
 	//-----------
 
 
 
-	function resizeR():Void {
+	private function resizeR():Void {
 		follower.x = follower.y = selector.x = selector.y = 0;
 		follower.width = follower.height = selector.width = selector.height = 50;
 		
@@ -151,7 +161,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 		
 		sback.width = spriteWidth*50;
 		sback.height = spriteHeight*50;
-		graybak.width = spriteWidth*50+35
+		graybak.width = spriteWidth * 50 + 35;
 		graybak.height = spriteHeight*50+40+135;
 		
 		if(graybak.width< 460 ){
@@ -161,65 +171,65 @@ class SpriteSheetManager extends ShowSpriteSheets
 		//trace(sback.width,spriteWidth,"spriteWidthspriteWidth");
 	}
 	
-	function stDrag(e:MouseEvent):Void {
+	private function stDrag(e:MouseEvent):Void {
 		startDrag();
 	}
-	function stopxDrag(e:MouseEvent):Void {
+	private function stopxDrag(e:MouseEvent):Void {
 		stopDrag();
 	}
 
-	function dclick(e:MouseEvent):Void {
+	private function dclick(e:MouseEvent):Void {
 		pressD = true;
-		var mox:int = Math.floor(e.currentTarget.mouseX/MovieClip(root).tileWidth);
-		var moy:int = Math.floor(e.currentTarget.mouseY/MovieClip(root).tileHeight);
-		startArr = [mox,moy];
+		var mox:Int = Std.int(e.currentTarget.mouseX/ TileManager.tileWidth);
+		var moy:Int = Std.int(e.currentTarget.mouseY/TileManager.tileHeight);
+		startArr = [mox, moy];
 
-		selector.alpha = .3;
-		selector.width = 0;
+		selector.alpha 	= .3;
+		selector.width 	= 0;
 		selector.height = 0;
-		selector.x = mox*50;
-		selector.y =moy*50;
+		selector.x 		= mox*50;
+		selector.y 		= moy*50;
 	}
-	function uclick(e:MouseEvent):Void {
+	private function uclick(e:MouseEvent):Void {
 		pressD = false;
-		var mox:int = Math.floor(e.currentTarget.mouseX/MovieClip(root).tileWidth);
-		var moy:int = Math.floor(e.currentTarget.mouseY/MovieClip(root).tileHeight);
+		var mox:Int = Math.floor(e.currentTarget.mouseX/TileManager.tileWidth);
+		var moy:Int = Math.floor(e.currentTarget.mouseY/TileManager.tileHeight);
 		stopArry = [mox,moy];
 
 
-		MovieClip(root).eraseBrush = false;
-		MovieClip(root).selected_Array = makeArray(mox,moy);
-		MovieClip(root).selectedtile = MovieClip(root).selected_Array[0][0];
-		MovieClip(root).selct.text = MovieClip(root).selected_Array[0][0];
-		tileselc.text = MovieClip(root).selct.text;
+		displayManager.eraseBrush = false;
+		displayManager.selected_Array = makeArray(mox,moy);
+		displayManager.selectedtile = displayManager.selected_Array[0][0];
+		displayManager.selct.text = displayManager.selected_Array[0][0]+"";
+		tileselc.text = displayManager.selct.text;
 	}
-	function makeArray(endX:Int,endY:Int):Array {
-		var rawrow:int =endY-startArr[1];
-		var rawcol:int = endX-startArr[0];
-		var rows:int = Math.abs(rawrow)+1;
-		var col:int = Math.abs(rawcol)+1;
+	private function makeArray(endX:Int,endY:Int):Array<Array<Int>> {
+		var rawrow:Int = endY-startArr[1];
+		var rawcol:Int = endX-startArr[0];
+		var rows:Int = Std.int(Math.abs(rawrow)+1);
+		var col:Int = Std.int(Math.abs(rawcol)+1);
 
-		var mostLeft:int = startArr[0];
-		var mostUp:int = startArr[1];
+		var mostLeft:Int = startArr[0];
+		var mostUp:Int = startArr[1];
 		if (rawcol<0) {
 			mostLeft = mostLeft-(col-1);
 		}
 		if (rawrow<0) {
 			mostUp = mostUp-(rows-1);
 		}
-		var num:int = stnum+(mostUp*spriteWidth)+mostLeft;
-		var Arr:Array = new Array();
-		for (var r:int = 0; r<rows; r++) {
+		var num:Int = stnum+(mostUp*spriteWidth)+mostLeft;
+		var Arr:Array<Array<Int>> = new Array<Array<Int>>();
+		for (r in 0...rows) {
 			Arr[r]=[];
-			for (var c:int = 0; c<col; c++) {
+			for (c in 0...col) {
 				Arr[r][c] = num+(r* spriteWidth)+c;
 			}
 		}
 		return Arr;
 	}
-	function fol(e:MouseEvent):Void {
-		var xx:int = Math.floor(e.currentTarget.mouseX/50);
-		var yy:int = Math.floor(e.currentTarget.mouseY/50);
+	private function fol(e:MouseEvent):Void {
+		var xx:Int = Math.floor(e.currentTarget.mouseX/50);
+		var yy:Int = Math.floor(e.currentTarget.mouseY/50);
 		follower.x = xx * 50;
 		follower.y = yy * 50;
 
@@ -227,14 +237,14 @@ class SpriteSheetManager extends ShowSpriteSheets
 		if (pressD && preV!=now) {
 			preV = now;
 			//
-			var rawcol:int = xx-startArr[0];
-			var rawrow:int = yy-startArr[1];
+			var rawcol:Int = xx-startArr[0];
+			var rawrow:Int = yy-startArr[1];
 
-			var rows:int = (Math.abs(rawrow)+1);
-			var col:int = (Math.abs(rawcol)+1);
+			var rows:Int = Std.int(Math.abs(rawrow)+1);
+			var col:Int = Std.int(Math.abs(rawcol)+1);
 
-			var mostLeft:int = startArr[0];
-			var mostUp:int = startArr[1];
+			var mostLeft:Int = startArr[0];
+			var mostUp:Int = startArr[1];
 
 			if (rawcol<0) {
 				mostLeft = mostLeft-(col-1);
@@ -243,11 +253,11 @@ class SpriteSheetManager extends ShowSpriteSheets
 				mostUp = mostUp-(rows-1);
 			}
 			selector.x = mostLeft * 50;
-			selector.y = mostUp * 50
+			selector.y = mostUp * 50;
 
 			selector.width = col*50;
 			selector.height = rows*50;
 			//
 		}
-	}*/
+	}
 }

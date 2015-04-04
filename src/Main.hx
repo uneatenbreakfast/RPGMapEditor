@@ -19,6 +19,7 @@ class Main extends Sprite
 	
 	public function new() 
 	{
+		
 		super();
 		thisMain = this;
 				
@@ -29,8 +30,6 @@ class Main extends Sprite
 		tileManager.init();
 		
 		this.addChild(displayManager);
-		
-		
 	}
 	static function main() 
 	{

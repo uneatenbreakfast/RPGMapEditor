@@ -46,16 +46,16 @@ class TileManager extends Sprite
 	//
 	private var pressKeys:Object = {};
 	private var isBusy:Bool = false;
-	private var showingSheet:Bool = false;
+	
 	private var phantomtile:MovieClip;
-	private var selectedtile:Int = 2;
-	private var selected_Array:Array<Dynamic> = new Array<Dynamic>();
+	//private var selectedtile:Int = 2;
+	//private var selected_Array:Array<Dynamic> = new Array<Dynamic>();
 	private var activelayer:Int = 0;
 	//private var activelaybut:MovieClip = bg0;
 	private var tileDisplay:Array<Dynamic> = new Array<Dynamic>();
 	private var prePlace:String = "";
 	private var placer:Sprite = new Sprite();
-	private var eraseBrush:Bool = false;
+
 	private var cam_point:Point = new Point(0,0);
 	private var lastviewpoint:Point = new Point(0, 0);
 	private var tilenumLength:Int = 0;
@@ -65,7 +65,8 @@ class TileManager extends Sprite
 	public var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
 	public var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
 	
-	public var spriteSheets:Array<Dynamic> = new Array<Dynamic>();//spriteSheets.push(["tl_grasslands",1])
+	public var showingSheet:Bool = false;
+	public var spriteSheets:Array<Dynamic>;//spriteSheets.push("tl_grasslands")
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
 	private var tilesets:Array<Dynamic> = new Array<Dynamic>();
 	
@@ -125,7 +126,7 @@ class TileManager extends Sprite
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
 		tilesets = cast (tileMovieClip.tilesets, Array<Dynamic> );
-		spriteSheets = cast (tileMovieClip.spriteSheets,Array<Dynamic> );
+		spriteSheets = cast (tileMovieClip.spriteSheets, Array<Dynamic> );
 		
 		// create the tiledic in Map for Haxe
 		for (i in tileKeysArr) {

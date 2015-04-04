@@ -12,6 +12,9 @@ import flash.geom.Rectangle;
 import flash.display.BitmapData;
 import flash.Lib;
 import Omni;
+
+import com.demonsters.debugger.MonsterDebugger;
+
 /**
  * ...
  * @author Nelson
@@ -56,14 +59,15 @@ class DisplayManager extends MainStageMC
 	
 	private var showingSheet:Bool = false;
 	private var phantomtile:MovieClip;
-	private var selectedtile:Int = 2;
-	private var selected_Array:Array<Dynamic> = new Array<Dynamic>();
+	public var selectedtile:Int = 2;
+	public var selected_Array:Array<Array<Int>> = new Array<Array<Int>>();
 	private var activelayer:Int = 0;
 	//private var activelaybut:MovieClip = bg0;
 	private var tileDisplay:Array<Dynamic> = new Array<Dynamic>();
 	private var prePlace:String = "";
 	private var placer:Sprite = new Sprite();
-	private var eraseBrush:Bool = false;
+	
+	public var eraseBrush:Bool = false;
 	private var cam_point:Point = new Point(0,0);
 	private var lastviewpoint:Point = new Point(0,0);
 	private var tilenumLength:Int = 0;
@@ -110,10 +114,7 @@ class DisplayManager extends MainStageMC
 	
 	private inline static var tileNumSpacer:String = "00";
 	
-	
-	
-	
-	
+
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
 			thisManager = new DisplayManager();
@@ -124,6 +125,10 @@ class DisplayManager extends MainStageMC
 	public function new() :Void
 	{			
 		super();
+		
+
+		MonsterDebugger.initialize(this);
+        MonsterDebugger.trace(this, "Hello World!");
 		
 		canvasBD = new BitmapData(900,400,false,0x333333);
 		bufferBD = new BitmapData(900+(2* tileWidth),400+(2* tileHeight),false,0x333333);
@@ -157,8 +162,10 @@ class DisplayManager extends MainStageMC
 		
 		toolsbench.mask = toolscover;
 		toolsbench.x = 0;
-		toolsbench.y = stage.stageHeight - toolsbench.height;
+		this.toolsbench.y = stage.stageHeight - toolsbench.height;
 		
+		   // Start the MonsterDebugger
+           
 		
 		// Housekeeping
 		//walk_eye.gotoAndStop(2);
@@ -223,14 +230,14 @@ class DisplayManager extends MainStageMC
 		isBusy = false;
 	}
 
-	function nub(e:KeyboardEvent):Void{
+	private function nub(e:KeyboardEvent):Void{
 		if (!isBusy) {
 			if(e.keyCode ==32){
 				showSheets2();
 			}
 		}
 	}
-	function shwmenu(e:MouseEvent):Void{
+	private function shwmenu(e:MouseEvent):Void{
 		if (!isBusy) {
 			isBusy = true;
 			var p:MenuSettings = new MenuSettings();
@@ -239,7 +246,7 @@ class DisplayManager extends MainStageMC
 			addChild(p);
 		}
 	}
-	function showmaplist(e:MouseEvent):Void{
+	private function showmaplist(e:MouseEvent):Void{
 		if (!isBusy) {
 			isBusy = true;
 			var p:Maplist = new Maplist();
@@ -248,7 +255,7 @@ class DisplayManager extends MainStageMC
 			addChild(p);
 		}
 	}
-	function showinput(e:MouseEvent):Void{
+	private function showinput(e:MouseEvent):Void{
 		if (!isBusy) {
 			isBusy = true;
 			var d:EnterMap = new EnterMap();
@@ -258,7 +265,7 @@ class DisplayManager extends MainStageMC
 		}
 	}
 
-	function showSheets(e:MouseEvent):Void{
+	private function showSheets(e:MouseEvent):Void{
 		showSheets2();
 	}
 
@@ -270,10 +277,10 @@ class DisplayManager extends MainStageMC
 				mySpriteSheet.x = 1238;
 				mySpriteSheet.y = 306;
 				addChild(mySpriteSheet);
-				mySpriteSheet.showinit();
+				mySpriteSheet.init();
 			}else{
 				if(!mySpriteSheet.visible){
-					mySpriteSheet.showinit();
+					mySpriteSheet.init();
 				}
 			}
 		}

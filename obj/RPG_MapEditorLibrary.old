@@ -6,6 +6,7 @@
   <frame>
     <library>
       <clip id="Sharepoint__" />
+      <clip id="lib.HaxeMonsterLib.swf" name="lib.HaxeMonsterLib.swf" import="lib\HaxeMonsterLib.swf" size="26405" modified="4/04/2015 10:26:51 a.m." />
     </library>
   </frame>
 </movie>
