@@ -38,6 +38,7 @@
   <library>
     <asset path="lib\MapEditorSWC.swc" />
     <asset path="lib\HaxeMonsterLib.swc" />
+    <asset path="lib\HaxeTweenLite.swc" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

@@ -26,7 +26,13 @@ class DisplayManager extends MainStageMC
 	
 	public inline static var tileHeight = 50;
 	public inline static var tileWidth = 50;
-	public inline static var screenWidth = 900;
+	public inline static var GameScreenWidth = 1200;
+	public inline static var GameScreenHeight = 600;
+	private inline static var tileNumSpacer:String = "00";
+		
+	private var gameEdgeLeft:Int;
+	private var gameEdgeRight:Int;
+	
 	
 	private var stageManager:Main;
 	private var saveMapManager:SaveMapManager;
@@ -40,23 +46,19 @@ class DisplayManager extends MainStageMC
 	
 	private var TileSet:Bool = false;
 	//
-	private var bufferRect:Rectangle = new Rectangle(-tileWidth,-tileHeight,screenWidth+(2* tileWidth),400+(2* tileHeight));
-	private var fillcolour:Int = 0x1D4B0B;
+	private var bufferRect:Rectangle;
+	public var fillcolour:Int = 0x1D4B0B; // dark green
 	private var bgfill:Int;
-	private var columns:Int = 19;
-	private var rows:Int = 8;
+	public var columns:Int;
+	public var rows:Int;
 	private var map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
-	private var warpGates:Array<Array<Dynamic>> = new Array<Array<Dynamic>>();
-	
+	public var warpGates:Array<WarpGate> = new Array<WarpGate>();
 	
 
 	//
 	private var pressKeys:Map<Int, Bool> = new Map<Int, Bool>();
-	
-	private var isBusy:Bool = false;
-	private var cineEditMode:Bool = false;
-	
+	private var isBusy:Bool = false;	
 	private var showingSheet:Bool = false;
 	private var phantomtile:MovieClip;
 	public var selectedtile:Int = 2;
@@ -74,9 +76,6 @@ class DisplayManager extends MainStageMC
 	
 	private var mySpriteSheet:SpriteSheetManager;
 	//
-	
-	
-	
 
 	private var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
 	
@@ -102,7 +101,6 @@ class DisplayManager extends MainStageMC
 	private var layer2visi:Bool = true;
 	private var layer3visi:Bool = true;
 	private var walklayervisi:Bool = false;
-	private var hero:MovieClip = new MovieClip();
 		
 	private var partofSheet:Array<Dynamic> = [];
 	private var largerthanView:Array<Dynamic> = [];
@@ -111,10 +109,16 @@ class DisplayManager extends MainStageMC
 	
 	private var visibleLayer:Array<Bool> = [false, false, false, false]; //	this["layer"+num+"visi"]
 	
+	private var cineEditMode:Bool = false; // let's you freely click and pan around map
+	private var cineEditMode_Point:Point = new Point(); // for cineEditMode=TRUE - starting point for the drag
+		
+	private var mouseCoordinate:Point = new Point();
+	private var eraser:ToggleButton;
 	
-	private inline static var tileNumSpacer:String = "00";
+	private var activePanel:MovieClip;
 	
-
+	public var allMaps:Array<String> = new Array<String>();
+	
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
 			thisManager = new DisplayManager();
@@ -129,43 +133,60 @@ class DisplayManager extends MainStageMC
 		MonsterDebugger.initialize(this);
         MonsterDebugger.trace(this, "Hello World!");
 		
-		canvasBD = new BitmapData(900,400,false,0x333333);
-		bufferBD = new BitmapData(900+(2* tileWidth),400+(2* tileHeight),false,0x333333);
-		skyBD = new BitmapData(900,400,true,0x333333);
-		skybuffer = new BitmapData(900+(2* tileWidth),400+(2* tileHeight),true,0x333333);
-
-		tmpBit = new BitmapData(bufferBD.width, bufferBD.height, false, fillcolour);
+		columns = 26;
+		rows = 14;
+		
+		bufferRect 	= new Rectangle( -tileWidth, -tileHeight, GameScreenWidth + (2 * tileWidth), GameScreenHeight + (2 * tileHeight));		
+		canvasBD 	= new BitmapData(GameScreenWidth, GameScreenHeight, false, 0x333333); 		
+		bufferBD 	= new BitmapData(GameScreenWidth + (2 * tileWidth), GameScreenHeight + (2 * tileHeight), false, 0x333333);		
+		skyBD 		= new BitmapData(GameScreenWidth, GameScreenHeight, true, 0x333333);		
+		skybuffer 	= new BitmapData(GameScreenWidth + (2 * tileWidth), GameScreenHeight + (2 * tileHeight), true, 0x333333);
+		tmpBit 		= new BitmapData(bufferBD.width, bufferBD.height, false, fillcolour);
+		
 		canvasBitmap = new Bitmap(canvasBD);
-		skyBitmap = new Bitmap(skyBD);
+		skyBitmap 	= new Bitmap(skyBD);
 	}
 	
 	public function turnOn():Void{
-		saveMapManager = SaveMapManager.getInstance();
-		tileManager = TileManager.getInstance();
+		saveMapManager 		= SaveMapManager.getInstance();
+		tileManager 		= TileManager.getInstance();
 		
-		tilebitdata = tileManager.tilebitdata;
-		tilenum = tileManager.tilenum;
-		spriteSheetSprites = tileManager.spriteSheetSprites;
+		tilebitdata 		= tileManager.tilebitdata;
+		tilenum 			= tileManager.tilenum;
+		spriteSheetSprites 	= tileManager.spriteSheetSprites;
 		
 		//
 		groundclip.addChild(canvasBitmap);
 		skyclip.addChild(skyBitmap);
-		hero.x = 400;
-		hero.y = 200;
+
+		groundclip.x = 600;
+		skyclip.x = groundclip.x;
 		
 		addChild(groundclip);
-		addChild(hero);
 		addChild(skyclip);
 		//addChild(new fpsBox(stage,0,400));
 		//-----
 				
-		   // Start the MonsterDebugger
-           
-		
 		// Housekeeping
 		//walk_eye.gotoAndStop(2);
 		
-		//------
+				
+		gameEdgeLeft	= Std.int(groundclip.x);
+		gameEdgeRight	= Std.int(groundclip.x + GameScreenWidth);
+		
+		// Buttons 
+		eraser = new ToggleButton( new Eraser_Btt() );
+		eraser.x = 603.4;
+		eraser.y = 632.1;
+		addChild(eraser);
+		
+		var cineEditModeBtt:ToggleButton = new ToggleButton(new EditMode_Btt());
+		cineEditModeBtt.x = 691;
+		cineEditModeBtt.y = 632.1;
+		cineEditModeBtt.addEventListener(MouseEvent.CLICK, cctv);
+		addChild(cineEditModeBtt);
+		
+		// Button Functions
 		stage.addEventListener(MouseEvent.MOUSE_DOWN,startplacetile);
 		stage.addEventListener(MouseEvent.MOUSE_UP,stopplacetile);
 		stage.addEventListener(MouseEvent.MOUSE_MOVE,ghosttile);
@@ -185,15 +206,22 @@ class DisplayManager extends MainStageMC
 		on3.addEventListener(MouseEvent.CLICK,setvisi);
 		walk_eye.addEventListener(MouseEvent.CLICK,setvisi);
 		
-		sheets.addEventListener(MouseEvent.CLICK,showSheets);
+		newmap_btt.buttonMode = true;
+		newmap_btt.addEventListener(MouseEvent.CLICK, showNewPanel);
+		sheets_btt.addEventListener(MouseEvent.CLICK, showSheets);
 		obis.addEventListener(MouseEvent.CLICK,setlayer);
 		outputbtt.addEventListener(MouseEvent.CLICK, saveMapManager.outputmap);
 		inputbtt.addEventListener(MouseEvent.CLICK,showinput);
 		shwmapsbttx.addEventListener(MouseEvent.CLICK,showmaplist);
 		mapsettings_btt.addEventListener(MouseEvent.CLICK, shwmenu);
+		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN,keyscan);
 		stage.addEventListener(KeyboardEvent.KEY_UP,stopkeyscan);
 		stage.addEventListener(KeyboardEvent.KEY_DOWN, nub);
+		
+		stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
+		stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
+		stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
 		
 		showSheets2();// show Sheet uponStartup
 		//
@@ -204,9 +232,9 @@ class DisplayManager extends MainStageMC
 	}
 	
 	
-	private function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
+	public function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
 		currentmap = newmapname;
-		//curmap.text = "Current Map :"+currentmap;
+		mapname_txt.text = currentmap;
 			
 		map = new Array<Array<Array<Int>>>();
 		rows = rownum;
@@ -218,7 +246,7 @@ class DisplayManager extends MainStageMC
 			}
 		}
 		anitileList = new Array();
-		warpGates = new Array();
+		warpGates = new Array<WarpGate>();
 		warptlist.removeAll();
 		
 		resetBitmap(true);
@@ -235,10 +263,7 @@ class DisplayManager extends MainStageMC
 	private function shwmenu(e:MouseEvent):Void{
 		if (!isBusy) {
 			isBusy = true;
-			var p:MenuSettings = new MenuSettings();
-			p.x  = 455;
-			p.y = 224;
-			addChild(p);
+			switchToPanel(new Settings_Panel());
 		}
 	}
 	private function showmaplist(e:MouseEvent):Void{
@@ -250,6 +275,15 @@ class DisplayManager extends MainStageMC
 			addChild(p);
 		}
 	}
+	private function showNewPanel(e:MouseEvent):Void{
+		if (!isBusy) {
+			isBusy = true;
+			switchToPanel(new NewMap_Panel());
+		}
+	}
+	
+	
+	
 	private function showinput(e:MouseEvent):Void{
 		if (!isBusy) {
 			isBusy = true;
@@ -266,26 +300,39 @@ class DisplayManager extends MainStageMC
 
 	private function showSheets2():Void{	
 		if (!showingSheet) {
+			
+			showingSheet = true;
+			switchToPanel(new SpriteSheetManager ());
+			/*
 			if(mySpriteSheet == null){
-				showingSheet = true;
-				mySpriteSheet = new SpriteSheetManager ();
-				mySpriteSheet.x = 1238;
-				mySpriteSheet.y = 306;
+				
+
 				addChild(mySpriteSheet);
 				mySpriteSheet.init();
 			}else{
 				if(!mySpriteSheet.visible){
 					mySpriteSheet.init();
 				}
-			}
+			}*/
 		}
 	}
+	
+	private function switchToPanel(pmc:MovieClip):Void {
+		if (activePanel != null) {
+			removeChild(activePanel);
+		}
+		
+		activePanel = pmc;
+		activePanel.x = 55;
+		addChild(activePanel);
+	}
+	
 
-	function buildmap(instr:String):Void{
+	private function buildmap(instr:String):Void{
 		var pie:Array<String> = instr.split("#");
 		if (pie.length==3) {
 			anitileList = new Array<Dynamic>();
-			warpGates = new Array<Array<Dynamic>>();
+			warpGates = new Array<WarpGate>();
 			largerthanView = [];
 			warptlist.removeAll();
 			//
@@ -313,9 +360,8 @@ class DisplayManager extends MainStageMC
 					}
 				}
 			}
-			
-			
-			warpGates = new Array<Array<Dynamic>>();
+
+			warpGates = new Array<WarpGate>();
 			
 			//warpGates = pie[2].split("&");
 			var allWarpGates:Array<String> = pie[2].split("&");
@@ -325,19 +371,29 @@ class DisplayManager extends MainStageMC
 				
 				//warpGates[s] = allWarpGates[s].split(":");
 				var gates:Array<String> = allWarpGates[s].split(":");
+				var w:WarpGate = new WarpGate();
+				
+				
+				w.x = Std.parseInt(gates[0]);
+				w.y = Std.parseInt(gates[1]);
+				w.toTownName = gates[2];// [2] is a string - town name
+				w.warpLocations = new Array<Point>();
+				/*
 				warpGates[s][0] = Std.parseInt(gates[0]);
 				warpGates[s][1] = Std.parseInt(gates[1]);
 				warpGates[s][2] = gates[2];// [2] is a string - town name
-				warpGates[s][3] = new Array<Point>();
+				warpGates[s][3] = new Array<Point>();*/
 				
 				//warpGates[s][3] = allWarpGates[s][3].split("|");
 				var wLocs:Array<String> = gates[3].split("|");
-				
 				for (t in 0...wLocs.length) {
 					var xy:Array<String> = wLocs[t].split(",");
 					var p:Point = new Point(Std.parseInt(xy[0]), Std.parseInt( xy[1]) );
-					warpGates[s][3].push(p);
+					//warpGates[s][3].push(p);
+					w.warpLocations.push(p);
 				}
+				
+				warpGates.push(w);
 			}
 			
 			extendTilesLoop(0);
@@ -501,13 +557,16 @@ class DisplayManager extends MainStageMC
 	}
 
 	private function startplacetile(e:MouseEvent):Void{
-			if (!isBusy && !cineEditMode) {
-				prePlace = "";
-				placer.addEventListener(Event.ENTER_FRAME,placetile);
-			}
+		if (!isBusy && !cineEditMode) {
+			prePlace = "";
+			placer.addEventListener(Event.ENTER_FRAME,placetile);
+		}
 	}
 	private function stopplacetile(e:MouseEvent):Void{
 		placer.removeEventListener(Event.ENTER_FRAME,placetile);
+	}
+	private function mouseInMapArea():Bool {
+		return (stage.mouseY > 0 && stage.mouseY < GameScreenHeight &&	stage.mouseX < gameEdgeRight && stage.mouseX > gameEdgeLeft);
 	}
 	private function placetile(e:Event):Void{
 		if(saveBusy){
@@ -516,20 +575,24 @@ class DisplayManager extends MainStageMC
 		
 		var spritego:Bool = true;
 		if(mySpriteSheet!=null){
-			if(mySpriteSheet.hitTestPoint(stage.mouseX,stage.mouseY,true)){
+			if (mySpriteSheet.hitTestPoint(stage.mouseX, stage.mouseY, true)) {
 				spritego = false;
 			}
 		}	
 		
-		var dx:Int =  Math.floor((groundclip.mouseX+cam_point.x)/tileWidth)*tileWidth;
-		var dy:Int = Math.floor((groundclip.mouseY+cam_point.y)/tileHeight)*tileHeight;
-		var bar:String = dx+"_"+dy;
-		var ex:Int =  Math.floor((groundclip.mouseX+cam_point.x)/tileWidth);
-		var ey:Int = Math.floor((groundclip.mouseY+cam_point.y)/tileHeight);
-		if (stage.mouseY<400 && stage.mouseY>0 && stage.mouseX<900 && spritego && !cineEditMode) {
+		var dx:Int =  Math.floor((groundclip.mouseX + cam_point.x) / tileWidth) * tileWidth;
+		var dy:Int = Math.floor((groundclip.mouseY + cam_point.y) / tileHeight) * tileHeight;
+		
+		var bar:String = dx + "_" + dy;
+		
+		var ex:Int =  Math.floor((groundclip.mouseX + cam_point.x) / tileWidth);
+		var ey:Int = Math.floor((groundclip.mouseY + cam_point.y) / tileHeight);
+		
+		if (mouseInMapArea() && spritego && !cineEditMode) {					
 			if (bar !=prePlace) {
-				if (dy/tileHeight<rows && ex>=0 && ex<columns) {
+				if ((dy/tileHeight)<rows && ex>=0 && ex<columns) {
 					prePlace = bar;
+										
 					if (eraseBrush) {
 						removeGate(ey, ex);
 						if(activelayer!=4){
@@ -641,12 +704,14 @@ class DisplayManager extends MainStageMC
 			}
 		}
 	}
-	function ghosttile(e:MouseEvent):Void{
-		if (stage.mouseY>0 && stage.mouseY<400) {
+	private function ghosttile(e:MouseEvent):Void{
+		if (mouseInMapArea()) {
 			phantomtile.visible = true;
-			var dx:Int = Math.floor((stage.mouseX+cam_point.x)/tileWidth);
-			var dy:Int = Math.floor((stage.mouseY+cam_point.y)/tileHeight);
-			mousexy.text = dy+"-"+dx;
+			var dx:Int = Math.floor((groundclip.mouseX+cam_point.x)/tileWidth);
+			var dy:Int = Math.floor((groundclip.mouseY+cam_point.y)/tileHeight);
+			
+			mouseCoordinate.x = dx;
+			mouseCoordinate.y = dy;
 			
 			if(map[dy] == null){
 				return;
@@ -675,7 +740,7 @@ class DisplayManager extends MainStageMC
 			phantomtile.visible = false;
 		}
 	}
-	function setghosttile():Void{
+	private function setghosttile():Void{
 		phantomtile = new MovieClip();
 		phantomtile.alpha = .3;
 
@@ -689,8 +754,9 @@ class DisplayManager extends MainStageMC
 		
 		groundclip.addChild(phantomtile);
 	}
-	function mouseCamScrollWheel(e:MouseEvent):Void{
-		if (stage.mouseY < 400) {
+	private function mouseCamScrollWheel(e:MouseEvent):Void {
+		// mouse wheel moves camera y up/down
+		if (mouseInMapArea()) {
 			if (e.delta>0) {
 				//scroll up
 				if (cam_point.y>0) {
@@ -704,11 +770,11 @@ class DisplayManager extends MainStageMC
 			} else {
 				//scroll down
 
-				if (cam_point.y<((rows * tileHeight)-400)) {
+				if (cam_point.y<((rows * tileHeight)-GameScreenHeight)) {
 					var yrs:Int = 15;
 					cam_point.y += yrs;
-					if (cam_point.y>(rows * tileHeight)-400) {
-						cam_point.y = (rows * tileHeight)-400;
+					if (cam_point.y>(rows * tileHeight)-GameScreenHeight) {
+						cam_point.y = (rows * tileHeight)-GameScreenHeight;
 					}
 					resetBitmap();
 				}
@@ -721,19 +787,20 @@ class DisplayManager extends MainStageMC
 			}
 		}
 	}
-	function mouseCamScroll(e:Event):Void{
-		if (stage.mouseY<400 && !cineEditMode) {
-			if (stage.mouseX > 900-100  && cam_point.x<(columns * tileWidth)-screenWidth && stage.mouseX<900) {
-				var rp:Float = (100-(900-stage.mouseX))/100;
+	private function mouseCamScroll(e:Event):Void {
+		// mouse hover on sides moves camera left/right
+		if (mouseInMapArea() && !cineEditMode) {
+			if (stage.mouseX > gameEdgeRight-100  && cam_point.x<(columns * tileWidth)-GameScreenWidth && stage.mouseX<gameEdgeRight) {
+				var rp:Float = (100-(gameEdgeRight-stage.mouseX))/100;
 				var rs:Int = Std.int(15* rp);
 				cam_point.x += rs;
-				if (cam_point.x>(columns * tileWidth)-screenWidth) {
-					cam_point.x = (columns * tileWidth)-screenWidth;
+				if (cam_point.x>(columns * tileWidth)-GameScreenWidth) {
+					cam_point.x = (columns * tileWidth)-GameScreenWidth;
 				}
 				resetBitmap();
-			} else if (stage.mouseX < 100 && cam_point.x>0) {
+			} else if (stage.mouseX < gameEdgeLeft+100 && stage.mouseX > gameEdgeLeft && cam_point.x>0) {
 				//window move left
-				var lp:Float = (100-stage.mouseX)/100;
+				var lp:Float = (100-(stage.mouseX-gameEdgeLeft))/100;
 				var ls:Int = Std.int(15* lp);
 				cam_point.x -= ls;
 				if (cam_point.x<0) {
@@ -743,8 +810,8 @@ class DisplayManager extends MainStageMC
 			}
 		}
 	}
-	function select_tile(e:MouseEvent):Void{
-		eraseBrush = false;
+	private function select_tile(e:MouseEvent):Void{
+		notEraseBrush();
 		
 		selectedtile = e.currentTarget.tilenumber;
 		selct.text = selectedtile+"";
@@ -753,9 +820,17 @@ class DisplayManager extends MainStageMC
 		groundclip.removeChild(phantomtile);
 		setghosttile();
 	}
-	function resetBitmap(runonce:Bool=false):Void{
-		cam_pointx.text = cam_point.x+"";
-		cam_pointy.text = cam_point.y+"";
+	
+	private function updateStatusInfoBar():Void {
+		var str:String = "Camera : " + cam_point.x + " x " + cam_point.y;
+		str += "         ";
+		str += "R | C : <font color='#FF3300'>" + mouseCoordinate.y + "</font> | <font color='#00CCFF'>"+ mouseCoordinate.x+"</font>";
+		
+		statusinfo_txt.htmlText = str;	
+	}
+	
+	private function resetBitmap(runonce:Bool=false):Void{
+		updateStatusInfoBar();
 
 		if (runonce) {
 			anitileList = [];
@@ -768,7 +843,9 @@ class DisplayManager extends MainStageMC
 		if (colstart<0) {
 			colstart = 0;
 		}
-		var colend:Int = colstart+19;
+		
+		var colWidth:Int = Std.int((GameScreenWidth / tileWidth)+1);
+		var colend:Int = colstart+colWidth;
 		if (colend>columns-1) {
 			colend = columns-1;
 		}
@@ -777,33 +854,35 @@ class DisplayManager extends MainStageMC
 		if (yst<0) {
 			yst = 0;
 		}
-		var yend:Int = yst+9;
+		
+		var yHeight:Int = Std.int((GameScreenHeight / tileHeight)+1);
+		var yend:Int = yst+yHeight;
 		if (yend>rows-1) {
 			yend = rows-1;
 		}
 		
 		if(bgfill > 0){
-			bufferBD.copyPixels(tilebitdata[bgfill],new Rectangle(0, 0 ,screenWidth,400) ,new Point(tileWidth,tileHeight));
+			bufferBD.copyPixels(tilebitdata[bgfill], new Rectangle(0, 0 , GameScreenWidth, GameScreenHeight) , new Point(tileWidth, tileHeight));
 		}else{
-			bufferBD.fillRect(bufferBD.rect,0x000000);
-			bufferBD.fillRect(new Rectangle(0,0,(colend+1-colstart)* tileWidth,(yend+1-yst)* tileHeight),fillcolour);
+			bufferBD.fillRect(bufferBD.rect, 0x000000);
+			bufferBD.fillRect(new Rectangle(0, 0, (colend + 1 - colstart) * tileWidth, (yend + 1 - yst) * tileHeight), fillcolour);
 		}
 
 		skybuffer.fillRect(bufferBD.rect,fillcolour);
 		
 		var tileList1Return:Array<Array<DrawObject>> = new Array<Array<DrawObject>>();
 		var tileList1:Array<DrawObject> = new Array<DrawObject>();
+		
 		if (layer0visi) {
 			tileList1Return = listLoop(0, runonce, yst, yend, colstart, colend);
 			tileList1 = tileList1Return[0];
 			//theloop(0,runonce,yst,yend,colstart,colend);
 		}
+		
 		if (layer1visi) {
-
 			var tileList2Return:Array<Array<DrawObject>> = listLoop(1, runonce, yst, yend, colstart, colend);
 			var tileList2:Array<DrawObject> = new Array<DrawObject>();
 			tileList1 = tileList1.concat( tileList2Return[1]);			
-			
 			tileList2 = tileList2Return[0];
 			
 			var extendList:Array<DrawObject> = listExtensions(yst,yend,colstart,colend);	
@@ -814,20 +893,17 @@ class DisplayManager extends MainStageMC
 			tileList1= tileList1.concat(tileList2);
 		}
 		if (layer2visi) {
-
 			var tileList3Return:Array<Array<DrawObject>> = listLoop(2,runonce,yst,yend,colstart,colend);
 			//theloop(2,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList3Return[0]);
-		
 		}
+		
 		//invisible action event layer
 		if (layer3visi) {
-
 			var tileList4Return:Array<Array<DrawObject>> = listLoop(3,runonce,yst,yend,colstart,colend);
 			//theloop(3,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList4Return[0]);
 		}
-		
 		
 		// walkable layer
 		if (walklayervisi) {
@@ -1112,7 +1188,7 @@ class DisplayManager extends MainStageMC
 		}
 	}
 
-	function Mapsize(type:String,num:Int):Int {
+	private function Mapsize(type:String,num:Int):Int {
 		if (num<0) {
 			return 0;
 		} else if (type=="x" && num>columns) {
@@ -1137,11 +1213,11 @@ class DisplayManager extends MainStageMC
 		pressKeys[e.keyCode] = true;
 	}
 
-	function stopkeyscan(e:KeyboardEvent):Void {
+	private function stopkeyscan(e:KeyboardEvent):Void {
 		pressKeys.remove(e.keyCode);
 		 //delete pressKeys[ e.keyCode ];
 	} 
-	function addrowscol(keypress:Int):Void{
+	private function addrowscol(keypress:Int):Void{
 		var rowx:Array<Array<Int>> = new Array<Array<Int>>();
 		var tt:Int;
 		var restmap:Bool = false;
@@ -1221,7 +1297,7 @@ class DisplayManager extends MainStageMC
 			resetBitmap(true);
 		}
 	}
-	function trimmap(keypress:Int):Void{
+	private function trimmap(keypress:Int):Void{
 		var restmap:Bool = false;
 		var i:Int = 0;
 		var tt:Int;
@@ -1307,7 +1383,7 @@ class DisplayManager extends MainStageMC
 		}
 	}
 	
-	function isiteminarray (arrayx:Array<Dynamic>, item:Dynamic):Bool {
+	private function isiteminarray (arrayx:Array<Dynamic>, item:Dynamic):Bool {
 		var r:Bool = false;
 		for (z in 0...arrayx.length) {
 			if (arrayx[z] == item) {
@@ -1325,65 +1401,35 @@ class DisplayManager extends MainStageMC
 		return Std.parseInt(ox + tileNumSpacer + oy);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	/*
-	//-------
-	cineEditModebtt.addEventListener(MouseEvent.CLICK,cctv);
-	function cctv(e:MouseEvent):Void{
-		if(cineEditMode){
-			cineEditMode = false;
-			cineMARK.gotoAndStop(2);
-		}else{
-			cineEditMode = true;
-			cineMARK.gotoAndStop(1);
-		}
+	public function notEraseBrush():Void {
+		eraseBrush = false;
+		eraser.toggle(false);
 	}
 
-	stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
-	stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
-	stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
-	cineMARK.gotoAndStop(2);
-	var msx:Int;
-	var msy:Int;
-	var cineEditMode:Boolean = false
-	function mDown(e:MouseEvent):Void{
-		msx = stage.mouseX;
-		msy = stage.mouseY;
+	private function cctv(e:MouseEvent):Void{
+		cineEditMode = !cineEditMode;
+		var e:ToggleButton = cast( e.currentTarget, ToggleButton);
+		e.toggle(cineEditMode);
 	}
-	function mMove(e:MouseEvent):Void{ // moving the screen for cineEditMode
-		if (msx!=0 && msy!=0 && stage.mouseY<400 && cineEditMode) {
-			var nx:Int = stage.mouseX-msx;
-			var ny:Int = stage.mouseY-msy;
+	private function mDown(e:MouseEvent):Void{
+		cineEditMode_Point.x = stage.mouseX;
+		cineEditMode_Point.y = stage.mouseY;
+	}
+	private function mMove(e:MouseEvent):Void{ // moving the screen for cineEditMode
+		if (cineEditMode_Point.x != 0 && cineEditMode_Point.y != 0 && stage.mouseY < 400 && cineEditMode) {
+			var nx:Int = Std.int(stage.mouseX-cineEditMode_Point.x);
+			var ny:Int = Std.int(stage.mouseY-cineEditMode_Point.y);
 			cam_point.x = cam_point.x-nx;
 			cam_point.y = cam_point.y-ny;
 			
 			resetBitmap();
-			msx = stage.mouseX;
-			msy = stage.mouseY;
+			cineEditMode_Point.x = stage.mouseX;
+			cineEditMode_Point.y = stage.mouseY;
 		}
 	}
-	function mUp(e:MouseEvent):Void{
-		msx = 0;
-		msy = 0;
+	private function mUp(e:MouseEvent):Void{
+		cineEditMode_Point.x = 0;
+		cineEditMode_Point.y = 0;
 	}
-	*/
+	
 }

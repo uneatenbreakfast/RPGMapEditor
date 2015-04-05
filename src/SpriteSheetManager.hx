@@ -78,7 +78,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 			inum++;
 		}
 
-		closebtt.addEventListener(MouseEvent.CLICK, closx);
+
 		
 		sheet = tileManager.spriteSheetSprites[tileManager.spriteSheets[0]];
 		bitsheet = new Bitmap(sheet);
@@ -161,12 +161,12 @@ class SpriteSheetManager extends ShowSpriteSheets
 		
 		sback.width = spriteWidth*50;
 		sback.height = spriteHeight*50;
-		graybak.width = spriteWidth * 50 + 35;
+		/*graybak.width = spriteWidth * 50 + 35;
 		graybak.height = spriteHeight*50+40+135;
 		
 		if(graybak.width< 460 ){
 			graybak.width = 460;
-		}
+		}*/
 		
 		//trace(sback.width,spriteWidth,"spriteWidthspriteWidth");
 	}
@@ -197,7 +197,8 @@ class SpriteSheetManager extends ShowSpriteSheets
 		stopArry = [mox,moy];
 
 
-		displayManager.eraseBrush = false;
+		displayManager.notEraseBrush(); //displayManager.eraseBrush = false;
+		
 		displayManager.selected_Array = makeArray(mox,moy);
 		displayManager.selectedtile = displayManager.selected_Array[0][0];
 		displayManager.selct.text = displayManager.selected_Array[0][0]+"";
