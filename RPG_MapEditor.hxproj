@@ -37,7 +37,7 @@
   <!-- Assets to embed into the output SWF -->
   <library>
     <asset path="lib\MapEditorSWC.swc" />
-    <asset path="lib\HaxeMonsterLib.swf" />
+    <asset path="lib\HaxeMonsterLib.swc" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

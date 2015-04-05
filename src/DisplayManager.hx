@@ -126,7 +126,6 @@ class DisplayManager extends MainStageMC
 	{			
 		super();
 		
-
 		MonsterDebugger.initialize(this);
         MonsterDebugger.trace(this, "Hello World!");
 		
@@ -159,11 +158,7 @@ class DisplayManager extends MainStageMC
 		addChild(skyclip);
 		//addChild(new fpsBox(stage,0,400));
 		//-----
-		
-		toolsbench.mask = toolscover;
-		toolsbench.x = 0;
-		this.toolsbench.y = stage.stageHeight - toolsbench.height;
-		
+				
 		   // Start the MonsterDebugger
            
 		
@@ -195,7 +190,7 @@ class DisplayManager extends MainStageMC
 		outputbtt.addEventListener(MouseEvent.CLICK, saveMapManager.outputmap);
 		inputbtt.addEventListener(MouseEvent.CLICK,showinput);
 		shwmapsbttx.addEventListener(MouseEvent.CLICK,showmaplist);
-		menusetbtt.addEventListener(MouseEvent.CLICK,shwmenu);
+		mapsettings_btt.addEventListener(MouseEvent.CLICK, shwmenu);
 		stage.addEventListener(KeyboardEvent.KEY_DOWN,keyscan);
 		stage.addEventListener(KeyboardEvent.KEY_UP,stopkeyscan);
 		stage.addEventListener(KeyboardEvent.KEY_DOWN, nub);
@@ -873,7 +868,7 @@ class DisplayManager extends MainStageMC
 		return -1;
 	}
 
-	function listExtensions(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
+	private function listExtensions(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
 		
 		var campointx:Float = cam_point.x;
 		var campointy:Float = cam_point.y;
