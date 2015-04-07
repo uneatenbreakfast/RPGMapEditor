@@ -63,8 +63,9 @@ class DisplayManager extends MainStageMC
 	private var phantomtile:MovieClip;
 	public var selectedtile:Int = 2;
 	public var selected_Array:Array<Array<Int>> = new Array<Array<Int>>();
+	public var warp_selected:WarpGate;
 	private var activelayer:Int = 0;
-	//private var activelaybut:MovieClip = bg0;
+
 	private var tileDisplay:Array<Dynamic> = new Array<Dynamic>();
 	private var prePlace:String = "";
 	private var placer:Sprite = new Sprite();
@@ -95,19 +96,14 @@ class DisplayManager extends MainStageMC
 
 	private var canvasBitmap:Bitmap;
 	private var skyBitmap:Bitmap;
-		
-	private var layer0visi:Bool = true;
-	private var layer1visi:Bool = true;
-	private var layer2visi:Bool = true;
-	private var layer3visi:Bool = true;
-	private var walklayervisi:Bool = false;
-		
+				
 	private var partofSheet:Array<Dynamic> = [];
-	private var largerthanView:Array<Dynamic> = [];
+	private var largerthanView:Array<Dynamic> = new Array<Dynamic>();
 	private var saveBusy:Bool = false;	
+	
 	public var currentmap:String;
 	
-	private var visibleLayer:Array<Bool> = [false, false, false, false]; //	this["layer"+num+"visi"]
+	private var visibleLayer:Array<Bool> = [true, true, true, true, false, true]; //[0,1,2,events, walk, warpgates]
 	
 	private var cineEditMode:Bool = false; // let's you freely click and pan around map
 	private var cineEditMode_Point:Point = new Point(); // for cineEditMode=TRUE - starting point for the drag
@@ -118,6 +114,8 @@ class DisplayManager extends MainStageMC
 	private var activePanel:MovieClip;
 	
 	public var allMaps:Array<String> = new Array<String>();
+	
+	
 	
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
@@ -186,30 +184,153 @@ class DisplayManager extends MainStageMC
 		cineEditModeBtt.addEventListener(MouseEvent.CLICK, cctv);
 		addChild(cineEditModeBtt);
 		
+		
+		// Buttons - layer visibility
+		var visi_layer_0:ToggleButton 	= new ToggleButton(visibility_lay_0_btt);
+		var visi_layer_1:ToggleButton	= new ToggleButton(visibility_lay_1_btt);
+		var visi_layer_2:ToggleButton 	= new ToggleButton(visibility_lay_2_btt);
+		var visi_layer_e:ToggleButton 	= new ToggleButton(visibility_lay_e_btt);
+		var visi_layer_w:ToggleButton 	= new ToggleButton(visibility_lay_w_btt);
+		var visi_layer_wk:ToggleButton 	= new ToggleButton(visibility_lay_wk_btt);
+		
+		visi_layer_0.x = visibility_lay_0_btt.x;
+		visi_layer_0.y = visibility_lay_0_btt.y;
+		visi_layer_0.valueInt = 0;
+		
+		visi_layer_1.x = visibility_lay_1_btt.x;
+		visi_layer_1.y = visibility_lay_1_btt.y;
+		visi_layer_1.valueInt = 1;
+		
+		visi_layer_2.x = visibility_lay_2_btt.x;
+		visi_layer_2.y = visibility_lay_2_btt.y;
+		visi_layer_2.valueInt = 2;
+		
+		visi_layer_e.x = visibility_lay_e_btt.x;
+		visi_layer_e.y = visibility_lay_e_btt.y;
+		visi_layer_e.valueInt = 3;
+		
+		visi_layer_wk.x = visibility_lay_wk_btt.x;
+		visi_layer_wk.y = visibility_lay_wk_btt.y;
+		visi_layer_wk.valueInt = 4;
+		
+		visi_layer_w.x = visibility_lay_w_btt.x;
+		visi_layer_w.y = visibility_lay_w_btt.y;
+		visi_layer_w.valueInt = 5;
+				
+		visi_layer_0.scrubCoord();
+		visi_layer_1.scrubCoord();
+		visi_layer_2.scrubCoord();
+		visi_layer_e.scrubCoord();
+		visi_layer_wk.scrubCoord();
+		visi_layer_w.scrubCoord();
+		
+		addChild(visi_layer_0);
+		addChild(visi_layer_1);
+		addChild(visi_layer_2);
+		addChild(visi_layer_e);
+		addChild(visi_layer_wk);
+		addChild(visi_layer_w);
+		
+		visi_layer_0.toggle(visibleLayer[0]);
+		visi_layer_1.toggle(visibleLayer[1]);
+		visi_layer_2.toggle(visibleLayer[2]);
+		visi_layer_e.toggle(visibleLayer[3]);
+		visi_layer_wk.toggle(visibleLayer[4]);
+		visi_layer_w.toggle(visibleLayer[5]);
+		
+		// Buttons Layer select
+		var bttIndex_0:Int = getChildIndex(lay_0_btt);
+		var bttIndex_1:Int = getChildIndex(lay_1_btt);
+		var bttIndex_2:Int = getChildIndex(lay_2_btt);
+		var bttIndex_e:Int = getChildIndex(lay_e_btt);
+		var bttIndex_w:Int = getChildIndex(lay_w_btt);
+		
+		var bttLayer_0:ToggleButton 	= new ToggleButton(lay_0_btt);
+		var bttLayer_1:ToggleButton		= new ToggleButton(lay_1_btt);
+		var bttLayer_2:ToggleButton 	= new ToggleButton(lay_2_btt);
+		var bttLayer_e:ToggleButton 	= new ToggleButton(lay_e_btt);
+		var bttLayer_w:ToggleButton 	= new ToggleButton(lay_w_btt);
+		
+		bttLayer_0.x = lay_0_btt.x;
+		bttLayer_0.y = lay_0_btt.y;
+		bttLayer_0.valueInt = 0;
+		
+		bttLayer_1.x = lay_1_btt.x;
+		bttLayer_1.y = lay_1_btt.y;
+		bttLayer_1.valueInt = 1;
+		
+		bttLayer_2.x = lay_2_btt.x;
+		bttLayer_2.y = lay_2_btt.y;
+		bttLayer_2.valueInt = 2;
+		
+		bttLayer_e.x = lay_e_btt.x;
+		bttLayer_e.y = lay_e_btt.y;
+		bttLayer_e.valueInt = 3;
+		
+		bttLayer_w.x = lay_w_btt.x;
+		bttLayer_w.y = lay_w_btt.y;
+		bttLayer_w.valueInt = 4;
+		
+		bttLayer_0.scrubCoord();
+		bttLayer_1.scrubCoord();
+		bttLayer_2.scrubCoord();
+		bttLayer_e.scrubCoord();
+		bttLayer_w.scrubCoord();
+		
+		addChild(bttLayer_0);
+		addChild(bttLayer_1);
+		addChild(bttLayer_2);
+		addChild(bttLayer_e);
+		addChild(bttLayer_w);
+		
+		setChildIndex(bttLayer_0, bttIndex_0);
+		setChildIndex(bttLayer_1, bttIndex_1);
+		setChildIndex(bttLayer_2, bttIndex_2);
+		setChildIndex(bttLayer_e, bttIndex_e);
+		setChildIndex(bttLayer_w, bttIndex_w);
+		
+		var tg:Array<ToggleButton> = new Array<ToggleButton>();
+		tg.push(bttLayer_0);
+		tg.push(bttLayer_1);
+		tg.push(bttLayer_2);
+		tg.push(bttLayer_e);
+		tg.push(bttLayer_w);
+		
+		bttLayer_0.setToggleGroup(tg);
+		bttLayer_1.setToggleGroup(tg);
+		bttLayer_2.setToggleGroup(tg);
+		bttLayer_e.setToggleGroup(tg);
+		bttLayer_w.setToggleGroup(tg);
+		
+		bttLayer_0.toggle(true);
+
 		// Button Functions
-		stage.addEventListener(MouseEvent.MOUSE_DOWN,startplacetile);
-		stage.addEventListener(MouseEvent.MOUSE_UP,stopplacetile);
-		stage.addEventListener(MouseEvent.MOUSE_MOVE,ghosttile);
+		stage.addEventListener(MouseEvent.MOUSE_DOWN, startplacetile);
+		stage.addEventListener(MouseEvent.MOUSE_UP, stopplacetile);
+		stage.addEventListener(MouseEvent.MOUSE_MOVE, ghosttile);
 		
-		stage.addEventListener(MouseEvent.MOUSE_WHEEL,mouseCamScrollWheel);
-		stage.addEventListener(Event.ENTER_FRAME,mouseCamScroll);
+		stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseCamScrollWheel);
+		stage.addEventListener(Event.ENTER_FRAME, mouseCamScroll);
 		
-		eraser.addEventListener(MouseEvent.CLICK,erased);
-		bg0.addEventListener(MouseEvent.CLICK,setlayer);
-		bg1.addEventListener(MouseEvent.CLICK,setlayer);
-		bg2.addEventListener(MouseEvent.CLICK,setlayer);
-		bg3.addEventListener(MouseEvent.CLICK,setlayer);
+		eraser.addEventListener(MouseEvent.CLICK, erased);
 		
-		on0.addEventListener(MouseEvent.CLICK,setvisi);
-		on1.addEventListener(MouseEvent.CLICK,setvisi);
-		on2.addEventListener(MouseEvent.CLICK,setvisi);
-		on3.addEventListener(MouseEvent.CLICK,setvisi);
-		walk_eye.addEventListener(MouseEvent.CLICK,setvisi);
+		visi_layer_0.addEventListener(MouseEvent.CLICK, setvisi);
+		visi_layer_1.addEventListener(MouseEvent.CLICK, setvisi);
+		visi_layer_2.addEventListener(MouseEvent.CLICK, setvisi);
+		visi_layer_e.addEventListener(MouseEvent.CLICK, setvisi);
+		visi_layer_wk.addEventListener(MouseEvent.CLICK, setvisi);
 		
+		bttLayer_0.addEventListener(MouseEvent.CLICK, setlayer);
+		bttLayer_1.addEventListener(MouseEvent.CLICK, setlayer);
+		bttLayer_2.addEventListener(MouseEvent.CLICK, setlayer);
+		bttLayer_e.addEventListener(MouseEvent.CLICK, setlayer);
+		bttLayer_w.addEventListener(MouseEvent.CLICK, setlayer);
+		
+				
 		newmap_btt.buttonMode = true;
 		newmap_btt.addEventListener(MouseEvent.CLICK, showNewPanel);
 		sheets_btt.addEventListener(MouseEvent.CLICK, showSheets);
-		obis.addEventListener(MouseEvent.CLICK,setlayer);
+		
 		outputbtt.addEventListener(MouseEvent.CLICK, saveMapManager.outputmap);
 		inputbtt.addEventListener(MouseEvent.CLICK,showinput);
 		shwmapsbttx.addEventListener(MouseEvent.CLICK,showmaplist);
@@ -217,13 +338,12 @@ class DisplayManager extends MainStageMC
 		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN,keyscan);
 		stage.addEventListener(KeyboardEvent.KEY_UP,stopkeyscan);
-		stage.addEventListener(KeyboardEvent.KEY_DOWN, nub);
 		
 		stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
 		stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
 		stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
 		
-		showSheets2();// show Sheet uponStartup
+		showSheets();// show Sheet uponStartup
 		//
 		
 		rebuildmap(rows,columns,"newmap_"+Math.round(Math.random()* 99));
@@ -247,41 +367,20 @@ class DisplayManager extends MainStageMC
 		}
 		anitileList = new Array();
 		warpGates = new Array<WarpGate>();
-		warptlist.removeAll();
 		
 		resetBitmap(true);
 		isBusy = false;
 	}
 
-	private function nub(e:KeyboardEvent):Void{
-		if (!isBusy) {
-			if(e.keyCode ==32){
-				showSheets2();
-			}
-		}
-	}
-	private function shwmenu(e:MouseEvent):Void{
-		if (!isBusy) {
-			isBusy = true;
-			switchToPanel(new Settings_Panel());
-		}
-	}
 	private function showmaplist(e:MouseEvent):Void{
-		if (!isBusy) {
-			isBusy = true;
-			var p:Maplist = new Maplist();
-			p.x  = 455;
-			p.y = 224;
-			addChild(p);
-		}
+		switchToPanel(new Maplist());
 	}
 	private function showNewPanel(e:MouseEvent):Void{
-		if (!isBusy) {
-			isBusy = true;
-			switchToPanel(new NewMap_Panel());
-		}
+		switchToPanel(new NewMap_Panel());
 	}
-	
+	private function shwmenu(e:MouseEvent):Void{
+		switchToPanel(new Settings_Panel());
+	}
 	
 	
 	private function showinput(e:MouseEvent):Void{
@@ -294,16 +393,17 @@ class DisplayManager extends MainStageMC
 		}
 	}
 
-	private function showSheets(e:MouseEvent):Void{
-		showSheets2();
+	private function showSheets(e:MouseEvent = null):Void {
+		switchToPanel(new SpriteSheetManager ());
 	}
 
-	private function showSheets2():Void{	
+	/*
+	private function showSheets2():Void{	// delete if nothing else uses it
 		if (!showingSheet) {
 			
 			showingSheet = true;
 			switchToPanel(new SpriteSheetManager ());
-			/*
+			
 			if(mySpriteSheet == null){
 				
 
@@ -313,9 +413,9 @@ class DisplayManager extends MainStageMC
 				if(!mySpriteSheet.visible){
 					mySpriteSheet.init();
 				}
-			}*/
+			}
 		}
-	}
+	}*/
 	
 	private function switchToPanel(pmc:MovieClip):Void {
 		if (activePanel != null) {
@@ -333,8 +433,7 @@ class DisplayManager extends MainStageMC
 		if (pie.length==3) {
 			anitileList = new Array<Dynamic>();
 			warpGates = new Array<WarpGate>();
-			largerthanView = [];
-			warptlist.removeAll();
+			largerthanView = new Array<Dynamic>();
 			//
 			var head:Array<String> = pie[0].split(",");
 			columns = Std.parseInt(head[0]);
@@ -366,14 +465,10 @@ class DisplayManager extends MainStageMC
 			//warpGates = pie[2].split("&");
 			var allWarpGates:Array<String> = pie[2].split("&");
 			
-			for (s in 0...allWarpGates.length) {
-				warptlist.addItem( { label:s } );
-				
+			for (s in 0...allWarpGates.length) {				
 				//warpGates[s] = allWarpGates[s].split(":");
 				var gates:Array<String> = allWarpGates[s].split(":");
-				var w:WarpGate = new WarpGate();
-				
-				
+				var w:WarpGate = new WarpGate();				
 				w.x = Std.parseInt(gates[0]);
 				w.y = Std.parseInt(gates[1]);
 				w.toTownName = gates[2];// [2] is a string - town name
@@ -431,20 +526,20 @@ class DisplayManager extends MainStageMC
 		}
 		strmap += "#";
 			
-		for (s in 0...warpGates.length) {
-			strmap += warpGates[s][0] + ":";
-			strmap += warpGates[s][1] + ":";
-			strmap += warpGates[s][2] + ":";
-			for(t in 0...warpGates[s][3].length){
-				strmap += warpGates[s][3][t][0];
+		for (s in warpGates) {
+			strmap += s.x + ":";
+			strmap += s.y + ":";
+			strmap += s.toTownName + ":";
+			for(t in 0...s.warpLocations.length){
+				strmap += s.warpLocations[t].x;
 				strmap += ",";
-				strmap += warpGates[s][3][t][1];
+				strmap += s.warpLocations[t].y;
 				
-				if (t!=warpGates[s][3].length-1) {
+				if (t != s.warpLocations.length-1) {
 					strmap +="|";
 				}
 			}
-			if (s!=warpGates.length-1) {
+			if (s != warpGates[warpGates.length-1]) {
 				strmap +="&";
 			}
 		}
@@ -483,66 +578,18 @@ class DisplayManager extends MainStageMC
 		}
 	}
 
-	function setlayer(e:MouseEvent):Void{
-		var nullColour:Color = new Color();
-		nullColour.setTint(0xFFFFFF, 0);
-		toolsbench.activelaybut.transform.colorTransform = nullColour;
-		//
-		var nowlayer:Int = 0;
-		switch (e.target) {
-			case x if(x == toolsbench.bg0) :
-				nowlayer=0;
-			case x if(x == toolsbench.bg1) :
-				nowlayer=1;
-			case x if(x == toolsbench.bg2) :
-				nowlayer=2;
-			case x if(x == toolsbench.bg3) :
-				nowlayer=3;
-			case x if(x == toolsbench.obis):
-				nowlayer = 4;
-		}
+	private function setlayer(e:MouseEvent):Void{
+		var mc:ToggleButton = cast(e.currentTarget, ToggleButton);
+		var nowlayer:Int = mc.valueInt;
+		
 		activelayer = nowlayer;
-		toolsbench.activelaybut = e.target;
-		//
-		var cTint:Color = new Color();
-		cTint.setTint(0xFFFFFF, 1);
-		e.target.transform.colorTransform = cTint;
 	}
-	private function setvisi(e:MouseEvent):Void{
-		var num:Int = 0;
-		switch (e.target) {
-			case x if(x == toolsbench.on0) :
-				num = 0;
-			case x if(x == toolsbench.on1) :
-				num=1;
-			case x if(x == toolsbench.on2) :
-				num=2;
-			case x if(x == toolsbench.on3) :
-				num=3;
-			case x if(x == toolsbench.walk_eye) :
-				if(walklayervisi){// turn it off
-					e.target.gotoAndStop(2);
-					walklayervisi = false;
-				}else{// turn it on
-					e.target.gotoAndStop(1);
-					walklayervisi = true;
-				}
-				resetBitmap();
-				return;
-		}
+	private function setvisi(e:MouseEvent):Void {
+		var mc:ToggleButton = cast(e.currentTarget, ToggleButton);
+		var num:Int = mc.valueInt;
+		visibleLayer[num] = !visibleLayer[num];
 		
-		if(visibleLayer[num]){//if(this["layer"+num+"visi"]){
-			visibleLayer[num] = false;
-		}else{
-			visibleLayer[num] = true;
-		}
-		
-		if(visibleLayer[num]){
-			e.target.gotoAndStop(1);
-		}else{
-			e.target.gotoAndStop(2);
-		}
-		
+		mc.toggle(visibleLayer[num]);
 		resetBitmap();
 		
 	}
@@ -594,6 +641,7 @@ class DisplayManager extends MainStageMC
 					prePlace = bar;
 										
 					if (eraseBrush) {
+						// remove the tile
 						removeGate(ey, ex);
 						if(activelayer!=4){
 							removeAnimationTile(ey,ex,activelayer);
@@ -601,20 +649,24 @@ class DisplayManager extends MainStageMC
 						}
 						resetBitmap();
 					}else if (activelayer == 4) {
+						// Warp Layer - PLACE WARPS ONLY
+						// more than one warp on one cell ????
 						var over:Bool = false;
-						var sw:Int = warptlist.selectedItem.label;
-						for(s in 0...warpGates[sw][3]){
-							if(warpGates[sw][3][s][0] == ex && warpGates[sw][3][s][1] == ey){
+						if (warp_selected == null) {
+							return;
+						}						
+						for(s in warp_selected.warpLocations){
+							if(s.x == ex && s.y == ey){
 								over = true;
 								break;
 							}
 						}
 						if(!over){
-							warpGates[sw][3].push([ex,ey]);
+							warp_selected.warpLocations.push(new Point(ex,ey));
 							resetBitmap();
 						}
 					} else {
-						
+						// normal tiles bg/objects/sky/EVENT
 						if(selected_Array.length>0){
 							
 							var eyst:Int = ey;
@@ -667,22 +719,22 @@ class DisplayManager extends MainStageMC
 						}
 						resetBitmap();
 						//
-						
 					}
 				}
 			}
 		}
 	}
-	function removeGate(ey:Int,ex:Int):Void{
+	private function removeGate(ey:Int,ex:Int):Void{
 		for (s in warpGates) {
 			/*for(t in 0...warpGates[s][3].length){//for(t in warpGates[s][3]){
 				if( warpGates[s][3][t][0]==ex && ey==warpGates[s][3][t][1]){
 					warpGates[s][3].splice(t,1);
 				}
 			}*/
-			for(t in 0...s[3].length){
-				if( s[3][t].x == ex && ey == s[3][t].y){
-					s[3].splice(t,1);
+			
+			for(t in 0...s.warpLocations.length){
+				if( s.warpLocations[t].x == ex && ey == s.warpLocations[t].y){
+					s.warpLocations.splice(t,1);
 				}
 			}
 		}
@@ -694,7 +746,9 @@ class DisplayManager extends MainStageMC
 			if (tilenum[map[ey][ex][activelayer]].ani_hasAnimation){ //[4][0]) {
 				//trace("REMOVE IN:",2);
 				for (i in 0...anitileList.length) {//for (var i in anitileList) {
-					//trace("REMOVE:",i,anitileList);
+					if (anitileList[i] == null) {
+						continue;
+					}
 					if (anitileList[i][0] == ey && anitileList[i][1]==ex && anitileList[i][2]==activelayer) {
 						//delete anitileList[i];
 						anitileList.splice(i, 1);
@@ -740,7 +794,13 @@ class DisplayManager extends MainStageMC
 			phantomtile.visible = false;
 		}
 	}
-	private function setghosttile():Void{
+	public function setghosttile():Void {
+		if (phantomtile != null) {
+			if (groundclip.contains(phantomtile)) {
+				groundclip.removeChild(phantomtile);
+			}
+		}
+		
 		phantomtile = new MovieClip();
 		phantomtile.alpha = .3;
 
@@ -779,12 +839,6 @@ class DisplayManager extends MainStageMC
 					resetBitmap();
 				}
 			}
-		}else{
-			if (e.delta>0) {
-				toolsbench.y += 125;
-			} else {
-				toolsbench.y -= 125;
-			}
 		}
 	}
 	private function mouseCamScroll(e:Event):Void {
@@ -810,17 +864,7 @@ class DisplayManager extends MainStageMC
 			}
 		}
 	}
-	private function select_tile(e:MouseEvent):Void{
-		notEraseBrush();
 		
-		selectedtile = e.currentTarget.tilenumber;
-		selct.text = selectedtile+"";
-		selected_Array = new Array();
-
-		groundclip.removeChild(phantomtile);
-		setghosttile();
-	}
-	
 	private function updateStatusInfoBar():Void {
 		var str:String = "Camera : " + cam_point.x + " x " + cam_point.y;
 		str += "         ";
@@ -873,13 +917,15 @@ class DisplayManager extends MainStageMC
 		var tileList1Return:Array<Array<DrawObject>> = new Array<Array<DrawObject>>();
 		var tileList1:Array<DrawObject> = new Array<DrawObject>();
 		
-		if (layer0visi) {
+		if (visibleLayer[0]) {
+			//BG Layer - always behind hero
 			tileList1Return = listLoop(0, runonce, yst, yend, colstart, colend);
 			tileList1 = tileList1Return[0];
 			//theloop(0,runonce,yst,yend,colstart,colend);
 		}
 		
-		if (layer1visi) {
+		if (visibleLayer[1]) {
+			// Objects Layer - depth is sorted by y
 			var tileList2Return:Array<Array<DrawObject>> = listLoop(1, runonce, yst, yend, colstart, colend);
 			var tileList2:Array<DrawObject> = new Array<DrawObject>();
 			tileList1 = tileList1.concat( tileList2Return[1]);			
@@ -887,26 +933,28 @@ class DisplayManager extends MainStageMC
 			
 			var extendList:Array<DrawObject> = listExtensions(yst,yend,colstart,colend);	
 			tileList2 = tileList2.concat(extendList);
-			//tileList2.sortOn(["y","x"], Array.NUMERIC);
-			tileList2.sort(sortByY);
+			tileList2.sort(sortByY);			//tileList2.sortOn(["y","x"], Array.NUMERIC);
 
 			tileList1= tileList1.concat(tileList2);
 		}
-		if (layer2visi) {
+		if (visibleLayer[2]) {
+			// Sky Layer - always above hero
 			var tileList3Return:Array<Array<DrawObject>> = listLoop(2,runonce,yst,yend,colstart,colend);
 			//theloop(2,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList3Return[0]);
 		}
 		
-		//invisible action event layer
-		if (layer3visi) {
+		
+		if (visibleLayer[3]) {
+			// invisible Action Event Layer
 			var tileList4Return:Array<Array<DrawObject>> = listLoop(3,runonce,yst,yend,colstart,colend);
 			//theloop(3,runonce,yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList4Return[0]);
 		}
 		
-		// walkable layer
-		if (walklayervisi) {
+		
+		if (visibleLayer[4]) {
+			// Walkable Layer - Sets where 
 			var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList5);
 		}
@@ -914,20 +962,23 @@ class DisplayManager extends MainStageMC
 		drawAll(tileList1);
 
 		//
-		for (s in 0...warpGates.length) { //for (var s in warpGates) {
-			for (t in 0...warpGates[s][3].length) { //for (var t in warpGates[s][3]) {
-				var z:Int = warpGates[s][3][t][1];
-				var q:Int = warpGates[s][3][t][0];
+		if (visibleLayer[5]) {
+			// Show warpgates
+			for (s in warpGates) { //for (var s in warpGates) {
+				for (t in s.warpLocations) { //for (var t in warpGates[s][3]) {
+					var z:Int = Std.int(t.y); // warpGates[s][3][t][1];
+					var q:Int = Std.int(t.x); // warpGates[s][3][t][0];
 
-				//var dtile:Class = getDefinitionByName("tl_wg_" + s)  as Class;
-				//var key:Int = tiledic[dtile][0];
-				var key:Int = tiledic.get("tl_wg_" + s).key;
-				
-				var dx:Float = (q * tileWidth)- cam_point.x + tileWidth;
-				var dy:Float = (z * tileHeight)- cam_point.y + tileHeight;
-				var pt:Point = new Point(dx, dy);
-				var rec:Rectangle =  new Rectangle(0, 0, tileWidth, tileHeight);
-				bufferBD.copyPixels(tilebitdata[key], rec, pt,null,null,true);
+					//var dtile:Class = getDefinitionByName("tl_wg_" + s)  as Class;
+					//var key:Int = tiledic[dtile][0];
+					var key:Int = tiledic.get("tl_wg_" + s).key;
+					
+					var dx:Float = (q * tileWidth)- cam_point.x + tileWidth;
+					var dy:Float = (z * tileHeight)- cam_point.y + tileHeight;
+					var pt:Point = new Point(dx, dy);
+					var rec:Rectangle =  new Rectangle(0, 0, tileWidth, tileHeight);
+					bufferBD.copyPixels(tilebitdata[key], rec, pt,null,null,true);
+				}
 			}
 		}
 		//
@@ -1242,8 +1293,8 @@ class DisplayManager extends MainStageMC
 					//for(s in warpGates[sw][3]){
 					//	warpGates[sw][3][s][1]++;
 					//}
-					for(s in 0...sw[3].length){
-						sw[s][1]++;
+					for(s in sw.warpLocations){
+						s.y++;
 					}
 				}
 
@@ -1277,8 +1328,8 @@ class DisplayManager extends MainStageMC
 					//for(s in warpGates[sw][3]){
 					//	warpGates[sw][3][s][0]++;
 					//}
-					for(s in 0...sw[3].length){
-						sw[s][0]++;
+					for(s in sw.warpLocations){
+						s.x++;
 					}
 				}
 				
@@ -1317,8 +1368,8 @@ class DisplayManager extends MainStageMC
 					//for(s in warpGates[sw][3]){
 						//warpGates[sw][3][s][1]--;
 					//}
-					for(s in 0...sw[3].length){
-						sw[s][1]--;
+					for(s in sw.warpLocations){
+						s.y--;
 					}
 				}
 
@@ -1357,8 +1408,8 @@ class DisplayManager extends MainStageMC
 				}
 								
 				for (sw in warpGates) {
-					for(s in 0...sw[3].length){
-						sw[s][0]--;
+					for(s in sw.warpLocations){
+						s.x--;
 					}
 					
 					//for(s in warpGates[sw][3]){

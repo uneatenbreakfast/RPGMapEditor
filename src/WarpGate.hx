@@ -10,6 +10,8 @@ class WarpGate
 	public var toTownName:String; //[2]
 	public var warpLocations:Array<Point>; //[3] 
 	
+	public var warpInt:Int; // for the warplist
+	
 	public function new() 
 	{
 		

@@ -24,32 +24,17 @@ class TileManager extends Sprite
 {
 	public inline static var tileHeight = 50;
 	public inline static var tileWidth = 50;
-	public inline static var screenWidth = 900;
 	
 	private var stageManager:Main;
 	private var displayManager:DisplayManager;
 	public static var thisManager:TileManager;
-	
-	private var TileSet:Bool = false;
-	//
-	private var bufferRect:Rectangle = new Rectangle(-tileWidth,-tileHeight,screenWidth+(2* tileWidth),400+(2* tileHeight));
-	private var fillcolour:Int = 0x1D4B0B;
-	private var bgfill:Int;
-	private var columns:Int = 19;
-	private var rows:Int = 8;
-	private var map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
-	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
-	public var warpGates:Array<Dynamic> = new Array<Dynamic>();
 	//
 	//private var spriteSheetSprites:Array<Dynamic> = new Array<Dynamic>();
 	public var spriteSheetSprites:Map<String, BitmapData> = new Map<String, BitmapData>();
 	//
 	private var pressKeys:Object = {};
-	private var isBusy:Bool = false;
+
 	
-	private var phantomtile:MovieClip;
-	//private var selectedtile:Int = 2;
-	//private var selected_Array:Array<Dynamic> = new Array<Dynamic>();
 	private var activelayer:Int = 0;
 	//private var activelaybut:MovieClip = bg0;
 	private var tileDisplay:Array<Dynamic> = new Array<Dynamic>();
@@ -58,29 +43,28 @@ class TileManager extends Sprite
 
 	private var cam_point:Point = new Point(0,0);
 	private var lastviewpoint:Point = new Point(0, 0);
-	private var tilenumLength:Int = 0;
+
 	private var mySpriteSheet:ShowSpriteSheets;
 	//
 	public var tilebitdata:Map<Int, BitmapData> = new Map<Int, BitmapData>();//tilebitdata[key] = BitmapData
 	public var tilenum:Map<Int, TileObject> = new Map<Int, TileObject>();//tilenum[key] = [class/string,xoffset,yoffset,sendtoGround,[animation,nonLoop],]
 	public var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
-	
-	public var showingSheet:Bool = false;
-	public var spriteSheets:Array<Dynamic>;//spriteSheets.push("tl_grasslands")
+
+	public var spriteSheets:Array<String> = new Array<String>(); //spriteSheets.push("tl_grasslands")
+	//public var tilesets:Array<Dynamic> = new Array<Dynamic>();
+	public var tilesetArr:Array<Dynamic> = new Array<Dynamic>();
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
-	private var tilesets:Array<Dynamic> = new Array<Dynamic>();
+	public var tilesets:Map<String, Array<Int>>;
 	
+	public var partofSheet:Array<Int> = new Array<Int>();
+	public var looseTiles:Array<Int> = new Array<Int>();
 	
-
-	// LOAD THE TILESET
-	private var TileSetL:MyLoader;
-	// LOAD THE TILESET
-
-	
-	private var partofSheet:Array<Dynamic> = [];
 	private var largerthanView:Array<Dynamic> = [];
 	private var saveBusy:Bool = false;
 	
+	// LOAD THE TILESET
+	private var TileSetL:MyLoader;
+	// LOAD THE TILESET
 
 	public function new() :Void
 	{			
@@ -109,9 +93,7 @@ class TileManager extends Sprite
 
 		//tiledic = MovieClip(TileSetL.loader.content).tiledic;
 		//spriteSheetWalkables = MovieClip(TileSetL.loader.content).spriteSheetWalkables;
-		//spriteSheets = MovieClip(TileSetL.loader.content).spriteSheets;
-		//tilesets = MovieClip(TileSetL.loader.content).tilesets;
-		
+		//spriteSheets = MovieClip(TileSetL.loader.content).spriteSheets;		
 		
 		 // create the background worker
 		 /*
@@ -125,9 +107,15 @@ class TileManager extends Sprite
 		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
-		tilesets = cast (tileMovieClip.tilesets, Array<Dynamic> );
-		spriteSheets = cast (tileMovieClip.spriteSheets, Array<Dynamic> );
 		
+		// Tilesets
+		var tilesetsDic = cast (tileMovieClip.tilesets, Array<Dynamic> );
+		tilesetArr = cast (tileMovieClip.tilesetArr, Array<Dynamic> );
+		tilesets = new Map<String, Array<Int>>();
+		for (i in tilesetArr) {
+			tilesets.set(i, tilesetsDic[i] );
+		}
+				
 		// create the tiledic in Map for Haxe
 		for (i in tileKeysArr) {
 			var t:TileObject = new TileObject();
@@ -187,6 +175,8 @@ class TileManager extends Sprite
 					var sendtoBack:Bool = tileRow.sendToGround; //  tileRow[3];
 					var depthadd:Int = Std.int(tileRow.depthPoint); // tileRow[11];
 					var className:String = tileRow.className;	// tileRow[12];
+					
+					spriteSheets.push(className);
 										
 					var spname:String = className;
 					if(spriteSheetSprites[spname] == null){
@@ -235,8 +225,10 @@ class TileManager extends Sprite
 					}
 				//
 				}
-			}
-			
+			}else {
+				// does not use sprite sheet - is a loose tile
+				looseTiles.push(tileRow.key);
+			}			
 		}
 		// now add the spritesheet tiles
 		//for(spr in 0...spritesheettilesMade.length){
@@ -252,77 +244,6 @@ class TileManager extends Sprite
 		for (e in tiledic) {
 			setTileProps(e.className, rect);
 		}
-		var initnum:Int = 0;
-		var yininum:Int = 0;
-				
-		var tilesetArr = cast (tileMovieClip.tilesetArr, Array<Dynamic> );
-		for (ox in tilesetArr) {
-			var intArr:Array<Int> = tilesets[ox];
-			for(pi in intArr){ //for (pi in tilesets[ox]) {
-				var curTarg:Int = tilesets[ox][pi]; 
-				var bitImage:BitmapData = tilebitdata[curTarg];
-			
-				yininum = Math.floor(initnum/16);
-			
-				var tis = new MovieClip();
-				var bit:BitmapData = bitImage;
-				var bitm:Bitmap = new Bitmap(bit);
-			
-				tis.addChild(bitm);
-				tis.y  = yininum*55;
-				tis.x = (initnum-(yininum*16))* (tileWidth+5)+10;
-			
-				tis.tilenumber  = curTarg;
-				//tis.addEventListener(MouseEvent.CLICK,select_tile);
-			
-				initnum++;
-				
-				//toolsbench.addChild(tis);
-				tis.width = tileWidth;
-				tis.height = tileHeight;
-			}
-		}
-		
-		
-		for (ni in 1...(tilenumLength+1)) {
-			var inarr:Bool = false;
-			for (kx in tilesetArr) {//for (kx in tilesets) {
-				if (Func.isiteminarray (tilesets[kx], ni)) {
-					inarr = true;
-					break;
-				}
-			}
-			
-			if (Func.isiteminarray (partofSheet, ni)) {
-				break;
-			}
-			
-			
-			if (!inarr) {
-				yininum = Math.floor(initnum/16);
-				var key:Int = ni;
-				var tix:MovieClip = new MovieClip();
-				var bitImage2:BitmapData = tilebitdata[key];
-				var bit2:BitmapData = bitImage2;
-				var bitm2:Bitmap = new Bitmap(bit2);
-									
-				tix.y  = yininum*55;
-				tix.x = (initnum-(yininum*16))* (tileWidth+5)+10;
-				tix.tilenumber = key;
-			
-				tix.addChild(bitm2);
-				tix.width = tileWidth;
-				tix.height = tileHeight;
-
-				//tix.addEventListener(MouseEvent.CLICK,select_tile);
-
-				//toolsbench.addChild(tix);
-				initnum++;
-			}
-		}
-		
-
-		
 		
 		//
 		displayManager.turnOn();
@@ -422,55 +343,5 @@ class TileManager extends Sprite
 		tilenum[key][9] = tiledic[e][9];//height
 		tilenum[key][10] = tiledic[e][11];//depthpoint:Int
 		*/
-		
-		if(key>tilenumLength){
-			tilenumLength = key;
-		}
-	}
-
-	
-	
-
-	/*
-	//-------
-	cineEditModebtt.addEventListener(MouseEvent.CLICK,cctv);
-	function cctv(e:MouseEvent):void{
-		if(cineEditMode){
-			cineEditMode = false;
-			cineMARK.gotoAndStop(2);
-		}else{
-			cineEditMode = true;
-			cineMARK.gotoAndStop(1);
-		}
-	}
-
-	stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
-	stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
-	stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
-	cineMARK.gotoAndStop(2);
-	var msx:Int;
-	var msy:Int;
-	var cineEditMode:Boolean = false
-	function mDown(e:MouseEvent):void {
-		msx = stage.mouseX;
-		msy = stage.mouseY;
-	}
-	function mMove(e:MouseEvent):void { // moving the screen for cineEditMode
-		if (msx!=0 && msy!=0 && stage.mouseY<400 && cineEditMode) {
-			var nx:Int = stage.mouseX-msx;
-			var ny:Int = stage.mouseY-msy;
-			cam_point.x = cam_point.x-nx;
-			cam_point.y = cam_point.y-ny;
-			
-			resetBitmap();
-			msx = stage.mouseX;
-			msy = stage.mouseY;
-		}
-	}
-	function mUp(e:MouseEvent):void {
-		msx = 0;
-		msy = 0;
-	}
-	*/
-	
+	}	
 }
