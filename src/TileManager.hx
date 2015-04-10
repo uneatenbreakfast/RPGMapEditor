@@ -107,6 +107,7 @@ class TileManager extends Sprite
 		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
+		spriteSheetWalkables = cast (tileMovieClip.spriteSheetWalkables, Array<Dynamic> );
 		
 		// Tilesets
 		var tilesetsDic = cast (tileMovieClip.tilesets, Array<Dynamic> );
@@ -344,4 +345,49 @@ class TileManager extends Sprite
 		tilenum[key][10] = tiledic[e][11];//depthpoint:Int
 		*/
 	}	
+	
+	public function newWarpTile(i:Int):Void {
+		var tileName:String = "tl_wg_" + i;
+		
+		if(tiledic[tileName] == null){
+			var warpN:Int = i;
+			i = -9999 + i;
+
+			var t:TileObject = new TileObject();
+			tiledic[tileName] = t;
+			
+			t.key 					= i;
+			t.xoffset 				= 0;
+			t.yoffset				= 0;
+			t.sendToGround			= false;
+			t.setAnimationData(false, false, 0, 0);
+			t.totalFrames			= 0;
+			t.walkType				= 0;
+			t.extendsStandardTile	= false;
+			t.width					= 0;
+			t.height				= 0;
+			t.setSpriteSheet(false, new Point(), new Point(), "", false);
+			t.depthPoint			= 0;	
+			t.className 			= tileName;
+					
+			tilenum[t.key] = tiledic[tileName];
+			var tob:TileObject = tilenum[t.key];
+			tob.totalFrames = 1;		
+
+			var classX = Type.resolveClass("tl_wg_template");
+			var ti = Type.createEmptyInstance(classX);
+			ti.num.text = warpN+ "";
+					
+			tilebitdata[t.key] = new BitmapData(ti.width,ti.height,true,0x000000);
+			var mtx:Matrix = new Matrix();
+
+			mtx.tx = tob.xoffset;
+			mtx.ty = tob.yoffset;
+			tilebitdata[t.key].draw(cast(ti, MovieClip), mtx);
+			
+			tob.width = ti.width;
+			tob.height = ti.height;
+		}
+		
+	}
 }

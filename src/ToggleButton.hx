@@ -15,7 +15,7 @@ class ToggleButton extends MovieClip
 	private var icon:MovieClip;
 	private var hitBG:MovieClip;
 	private var toggleGroup:Array<ToggleButton>;
-	private var mmc:MovieClip;
+	private var actual_mc:MovieClip;
 	
 	public var valueInt:Int;
 	
@@ -28,7 +28,7 @@ class ToggleButton extends MovieClip
 		this.buttonMode = true;
 		hitBG = mc.hit;
 		icon = mc.icon;
-		mmc = mc;
+		actual_mc = mc;
 		
 		toggle(isSelected);
 		this.addEventListener(MouseEvent.CLICK, mclick);
@@ -68,7 +68,7 @@ class ToggleButton extends MovieClip
 	}
 	
 	public function scrubCoord():Void {
-		mmc.x = mmc.y = 0;
+		actual_mc.x = actual_mc.y = 0;
 	}
 	private function closeOthers():Void {
 		for (i in toggleGroup) {

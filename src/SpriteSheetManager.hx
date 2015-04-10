@@ -52,7 +52,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 			tt.txt.mouseEnabled = false;
 			tt.txt.text = i;
 			tt.label = i;
-			tt.data = "No Data";
+			tt.data = "0";
 			tt.type = "tileset";
 			allTilesets.push(tt);
 		}
@@ -116,22 +116,27 @@ class SpriteSheetManager extends ShowSpriteSheets
 		sheetholder.addEventListener(MouseEvent.MOUSE_DOWN, dclick);
 		sheetholder.addEventListener(MouseEvent.MOUSE_UP, uclick);
 		sheetholder.addEventListener(MouseEvent.MOUSE_MOVE, fol);
-
-		graybak.addEventListener(MouseEvent.MOUSE_DOWN, stDrag);
-		graybak.addEventListener(MouseEvent.MOUSE_UP, stopxDrag);
 		
-		changeSheet(tileManager.spriteSheets[0], tileManager.tiledic[tileManager.spriteSheets[0]].key);
+		if (displayManager.selectedTileSet != null) {
+			sheettileSwap(displayManager.selectedTileSet[2], displayManager.selectedTileSet[0], Std.parseInt(displayManager.selectedTileSet[1]));
+		}else {
+			changeSheet(tileManager.spriteSheets[0], tileManager.tiledic[tileManager.spriteSheets[0]].key);
+		}
 	}
 	
 	private function itemChange(e:MouseEvent):Void {
-		if (e.currentTarget.type == "spritesheet") {
+		sheettileSwap(e.currentTarget.type, e.currentTarget.label, e.currentTarget.data);
+	}
+	private function sheettileSwap(type:String, lab:String, data:Int ):Void {
+		displayManager.selectedTileSet = [lab, data+"", type];
+		
+		if (type == "spritesheet") {
 			// spritesheet
-			changeSheet(e.currentTarget.label, e.currentTarget.data );
+			changeSheet(lab, data );
 		}else {
 			// tileset
-			changeTileSet(e.currentTarget.label, e.currentTarget.data );
+			changeTileSet(lab, data );
 		}
-		
 	}
 	private function changeTileSet(sheetName:String, sheetNum:Int):Void {
 		clearSheet();
@@ -244,12 +249,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 		sback.height = spriteHeight*50;
 	}
 	
-	private function stDrag(e:MouseEvent):Void {
-		startDrag();
-	}
-	private function stopxDrag(e:MouseEvent):Void {
-		stopDrag();
-	}
+
 	private function dclick(e:MouseEvent):Void {
 		pressD = true;
 		var mox:Int = Std.int(e.currentTarget.mouseX / TileManager.tileWidth);
@@ -270,10 +270,13 @@ class SpriteSheetManager extends ShowSpriteSheets
 
 
 		displayManager.notEraseBrush(); //displayManager.eraseBrush = false;
+		displayManager.resetPhantomTile();
 		
 		displayManager.selected_Array = makeArray(mox, moy);
 		displayManager.selectedtile = displayManager.selected_Array[0][0];
 		tileselc.text = displayManager.selected_Array[0][0] + "";
+		
+		displayManager.updateSelectedTileInfo();
 	}
 	
 	private function select_tile(e:MouseEvent):Void {
@@ -285,6 +288,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 		tileselc.text = mc.tilenumber + "";
 		
 		displayManager.setghosttile();
+		displayManager.updateSelectedTileInfo();
 	}
 	
 	

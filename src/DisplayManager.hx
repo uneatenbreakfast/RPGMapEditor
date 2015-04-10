@@ -61,9 +61,15 @@ class DisplayManager extends MainStageMC
 	private var isBusy:Bool = false;	
 	private var showingSheet:Bool = false;
 	private var phantomtile:MovieClip;
+	
+	// selected tiles
 	public var selectedtile:Int = 2;
 	public var selected_Array:Array<Array<Int>> = new Array<Array<Int>>();
-	public var warp_selected:WarpGate;
+	private var visi_selectedTile_btt:ToggleButton;
+	private var selected_bit:Bitmap;
+	
+	//
+	public var warp_selected:WarpGate = null;
 	private var activelayer:Int = 0;
 
 	private var tileDisplay:Array<Dynamic> = new Array<Dynamic>();
@@ -78,12 +84,9 @@ class DisplayManager extends MainStageMC
 	private var mySpriteSheet:SpriteSheetManager;
 	//
 
-	private var tiledic:Map<String, TileObject> = new Map<String,  TileObject>();
-	
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
 	private var tilesets:Array<Dynamic> = new Array<Dynamic>();
 	
-
 	private var groundclip:MovieClip = new MovieClip();
 	private var skyclip:MovieClip = new MovieClip();
 	private var canvasBD:BitmapData;
@@ -103,7 +106,7 @@ class DisplayManager extends MainStageMC
 	
 	public var currentmap:String;
 	
-	private var visibleLayer:Array<Bool> = [true, true, true, true, false, true]; //[0,1,2,events, walk, warpgates]
+	private var visibleLayer:Array<Bool> = [true, true, true, true, true, false, true]; //[0,1,2,events, warpgates, walk, selectedtile_visibility]
 	
 	private var cineEditMode:Bool = false; // let's you freely click and pan around map
 	private var cineEditMode_Point:Point = new Point(); // for cineEditMode=TRUE - starting point for the drag
@@ -112,11 +115,11 @@ class DisplayManager extends MainStageMC
 	private var eraser:ToggleButton;
 	
 	private var activePanel:MovieClip;
+	public var selectedTileSet:Array<String>;
+	public var authorName:String = "";
 	
-	public var allMaps:Array<String> = new Array<String>();
-	
-	
-	
+	private var ignoreList:Array<Int> = [ Omni.BUTTERFLY ];//tiles to ignore
+		
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
 			thisManager = new DisplayManager();
@@ -143,6 +146,9 @@ class DisplayManager extends MainStageMC
 		
 		canvasBitmap = new Bitmap(canvasBD);
 		skyBitmap 	= new Bitmap(skyBD);
+		
+		var rndNames:Array<String> = ["Kaiba","Seto","Yugi","Yami","Tea","Tristan","Joey","Mai"];
+		authorName = rndNames[Std.int(Math.random() * rndNames.length)] + "_" + Func.randInt(1000);
 	}
 	
 	public function turnOn():Void{
@@ -184,6 +190,15 @@ class DisplayManager extends MainStageMC
 		cineEditModeBtt.addEventListener(MouseEvent.CLICK, cctv);
 		addChild(cineEditModeBtt);
 		
+		visi_selectedTile_btt = new ToggleButton(s_tileVisibtt);
+		visi_selectedTile_btt.x = s_tileVisibtt.x;
+		visi_selectedTile_btt.y = s_tileVisibtt.y;
+		visi_selectedTile_btt.valueInt = 6;
+		visi_selectedTile_btt.scrubCoord();
+		visi_selectedTile_btt.addEventListener(MouseEvent.CLICK, setvisi);
+		addChild(visi_selectedTile_btt);
+		
+		grassoptimizer_btt.addEventListener(MouseEvent.CLICK, optimizeGrass);
 		
 		// Buttons - layer visibility
 		var visi_layer_0:ToggleButton 	= new ToggleButton(visibility_lay_0_btt);
@@ -211,11 +226,11 @@ class DisplayManager extends MainStageMC
 		
 		visi_layer_wk.x = visibility_lay_wk_btt.x;
 		visi_layer_wk.y = visibility_lay_wk_btt.y;
-		visi_layer_wk.valueInt = 4;
+		visi_layer_wk.valueInt = 5;
 		
 		visi_layer_w.x = visibility_lay_w_btt.x;
 		visi_layer_w.y = visibility_lay_w_btt.y;
-		visi_layer_w.valueInt = 5;
+		visi_layer_w.valueInt = 4;
 				
 		visi_layer_0.scrubCoord();
 		visi_layer_1.scrubCoord();
@@ -235,8 +250,8 @@ class DisplayManager extends MainStageMC
 		visi_layer_1.toggle(visibleLayer[1]);
 		visi_layer_2.toggle(visibleLayer[2]);
 		visi_layer_e.toggle(visibleLayer[3]);
-		visi_layer_wk.toggle(visibleLayer[4]);
-		visi_layer_w.toggle(visibleLayer[5]);
+		visi_layer_wk.toggle(visibleLayer[5]);
+		visi_layer_w.toggle(visibleLayer[4]);
 		
 		// Buttons Layer select
 		var bttIndex_0:Int = getChildIndex(lay_0_btt);
@@ -319,6 +334,7 @@ class DisplayManager extends MainStageMC
 		visi_layer_2.addEventListener(MouseEvent.CLICK, setvisi);
 		visi_layer_e.addEventListener(MouseEvent.CLICK, setvisi);
 		visi_layer_wk.addEventListener(MouseEvent.CLICK, setvisi);
+		visi_layer_w.addEventListener(MouseEvent.CLICK, setvisi);
 		
 		bttLayer_0.addEventListener(MouseEvent.CLICK, setlayer);
 		bttLayer_1.addEventListener(MouseEvent.CLICK, setlayer);
@@ -326,14 +342,13 @@ class DisplayManager extends MainStageMC
 		bttLayer_e.addEventListener(MouseEvent.CLICK, setlayer);
 		bttLayer_w.addEventListener(MouseEvent.CLICK, setlayer);
 		
-				
 		newmap_btt.buttonMode = true;
 		newmap_btt.addEventListener(MouseEvent.CLICK, showNewPanel);
 		sheets_btt.addEventListener(MouseEvent.CLICK, showSheets);
 		
 		outputbtt.addEventListener(MouseEvent.CLICK, saveMapManager.outputmap);
 		inputbtt.addEventListener(MouseEvent.CLICK,showinput);
-		shwmapsbttx.addEventListener(MouseEvent.CLICK,showmaplist);
+		loadmap_btt.addEventListener(MouseEvent.CLICK, showmaplist);
 		mapsettings_btt.addEventListener(MouseEvent.CLICK, shwmenu);
 		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN,keyscan);
@@ -342,10 +357,7 @@ class DisplayManager extends MainStageMC
 		stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
 		stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
 		stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
-		
-		showSheets();// show Sheet uponStartup
-		//
-		
+				
 		rebuildmap(rows,columns,"newmap_"+Math.round(Math.random()* 99));
 		setghosttile();
 		//
@@ -353,8 +365,7 @@ class DisplayManager extends MainStageMC
 	
 	
 	public function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
-		currentmap = newmapname;
-		mapname_txt.text = currentmap;
+		updateMapName(newmapname);
 			
 		map = new Array<Array<Array<Int>>>();
 		rows = rownum;
@@ -370,15 +381,18 @@ class DisplayManager extends MainStageMC
 		
 		resetBitmap(true);
 		isBusy = false;
+		
+		//
+		showSheets();
 	}
 
 	private function showmaplist(e:MouseEvent):Void{
-		switchToPanel(new Maplist());
+		switchToPanel(new LoadMap());
 	}
 	private function showNewPanel(e:MouseEvent):Void{
 		switchToPanel(new NewMap_Panel());
 	}
-	private function shwmenu(e:MouseEvent):Void{
+	private function shwmenu(e:MouseEvent=null):Void{
 		switchToPanel(new Settings_Panel());
 	}
 	
@@ -396,26 +410,6 @@ class DisplayManager extends MainStageMC
 	private function showSheets(e:MouseEvent = null):Void {
 		switchToPanel(new SpriteSheetManager ());
 	}
-
-	/*
-	private function showSheets2():Void{	// delete if nothing else uses it
-		if (!showingSheet) {
-			
-			showingSheet = true;
-			switchToPanel(new SpriteSheetManager ());
-			
-			if(mySpriteSheet == null){
-				
-
-				addChild(mySpriteSheet);
-				mySpriteSheet.init();
-			}else{
-				if(!mySpriteSheet.visible){
-					mySpriteSheet.init();
-				}
-			}
-		}
-	}*/
 	
 	private function switchToPanel(pmc:MovieClip):Void {
 		if (activePanel != null) {
@@ -427,13 +421,28 @@ class DisplayManager extends MainStageMC
 		addChild(activePanel);
 	}
 	
-
+	public function loadNewMap(mapName:String, version:String, mapData:String):Void {
+		updateMapName(mapName);
+		resetCamera();
+		buildmap(mapData);
+		
+		showSheets();
+	}
+	public function updateMapName(mapName:String):Void {
+		currentmap = mapName;
+		mapname_txt.text = currentmap + " :: By "+ authorName;
+	}
+	public function updateBgTint(newTint:Int):Void {
+		fillcolour = newTint;
+	}	
 	private function buildmap(instr:String):Void{
 		var pie:Array<String> = instr.split("#");
+		
 		if (pie.length==3) {
 			anitileList = new Array<Dynamic>();
 			warpGates = new Array<WarpGate>();
 			largerthanView = new Array<Dynamic>();
+			map = new Array<Array<Array<Int>>>();
 			//
 			var head:Array<String> = pie[0].split(",");
 			columns = Std.parseInt(head[0]);
@@ -447,27 +456,25 @@ class DisplayManager extends MainStageMC
 			// map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
 			//map = pie[1].split("&");
 			var mapA:Array<String> = pie[1].split("&");
-			for ( i in 0...mapA.length) {
+			for ( i in 0...rows){ //mapA.length) {
+				map[i]= new Array<Array<Int>>(); // rows
 				//map[i] = map[i].split("|");
 				var mapB:Array<String> = mapA[i].split("|");
-				for (o in 0...mapB[i].length) {
+				for (o in 0...columns){ //mapB[i].length) {
+					map[i][o] = new Array<Int>(); // cols
 					//map[i][o] = mapB[i][o].split(":");
 					var mapC:Array<String> = mapB[o].split(":");
 					
-					for (j in 0...mapC[o].length) {
+					for (j in 0...mapC.length) {
 						map[i][o][j] = Std.parseInt(mapC[j]);
 					}
 				}
 			}
 
 			warpGates = new Array<WarpGate>();
-			
-			//warpGates = pie[2].split("&");
-			var allWarpGates:Array<String> = pie[2].split("&");
-			
+			var allWarpGates:Array<String> = pie[2].split("&");//warpGates = pie[2].split("&");
 			for (s in 0...allWarpGates.length) {				
-				//warpGates[s] = allWarpGates[s].split(":");
-				var gates:Array<String> = allWarpGates[s].split(":");
+				var gates:Array<String> = allWarpGates[s].split(":");//warpGates[s] = allWarpGates[s].split(":");
 				var w:WarpGate = new WarpGate();				
 				w.x = Std.parseInt(gates[0]);
 				w.y = Std.parseInt(gates[1]);
@@ -488,14 +495,15 @@ class DisplayManager extends MainStageMC
 					w.warpLocations.push(p);
 				}
 				
-				warpGates.push(w);
+				tileManager.newWarpTile(warpGates.length);
+				warpGates.push(w);				
 			}
 			
 			extendTilesLoop(0);
 			extendTilesLoop(1);
 			extendTilesLoop(2);
 			//largerthanView.sort(Array.UNIQUESORT);
-			largerthanView.sort(sortByY);
+			//largerthanView.sort(sortByY);
 			
 			resetBitmap(true);		
 		}
@@ -547,8 +555,8 @@ class DisplayManager extends MainStageMC
 	}
 	
 	
-	private var ignoreList:Array<Int> = [ Omni.BUTTERFLY ];//tiles to ignore
-	function extendTilesLoop(layer:Int):Void{
+	
+	private function extendTilesLoop(layer:Int):Void{
 		for (i in 0...rows) {
 			for (o in 0...columns) {
 				var key:Int = map[i][o][layer];
@@ -583,6 +591,15 @@ class DisplayManager extends MainStageMC
 		var nowlayer:Int = mc.valueInt;
 		
 		activelayer = nowlayer;
+		
+		if (nowlayer == 4) {
+			// just selected WARP layer button - open up the settings panel for the warps
+			shwmenu();
+			resetPhantomTile();
+		}else {
+			// other layers - show sprite sheet
+			showSheets();
+		}
 	}
 	private function setvisi(e:MouseEvent):Void {
 		var mc:ToggleButton = cast(e.currentTarget, ToggleButton);
@@ -593,8 +610,12 @@ class DisplayManager extends MainStageMC
 		resetBitmap();
 		
 	}
-	function erased(e:MouseEvent):Void{
+	private function erased(e:MouseEvent):Void{
 		eraseBrush = true;
+		resetPhantomTile();
+		updateSelectedTileInfo();
+	}
+	public function resetPhantomTile():Void {
 		groundclip.removeChild(phantomtile);
 		phantomtile = new SelectorCD();
 		phantomtile.alpha = .3;
@@ -606,7 +627,7 @@ class DisplayManager extends MainStageMC
 	private function startplacetile(e:MouseEvent):Void{
 		if (!isBusy && !cineEditMode) {
 			prePlace = "";
-			placer.addEventListener(Event.ENTER_FRAME,placetile);
+			placer.addEventListener(Event.ENTER_FRAME, placetile);
 		}
 	}
 	private function stopplacetile(e:MouseEvent):Void{
@@ -653,6 +674,7 @@ class DisplayManager extends MainStageMC
 						// more than one warp on one cell ????
 						var over:Bool = false;
 						if (warp_selected == null) {
+							addChild(new ErrorMessage("You must select a warp to use - See settings",  gameEdgeLeft, GameScreenHeight - 20));
 							return;
 						}						
 						for(s in warp_selected.warpLocations){
@@ -873,6 +895,11 @@ class DisplayManager extends MainStageMC
 		statusinfo_txt.htmlText = str;	
 	}
 	
+	private function resetCamera():Void {
+		cam_point.x = 0;
+		cam_point.y = 0;
+	}
+	
 	private function resetBitmap(runonce:Bool=false):Void{
 		updateStatusInfoBar();
 
@@ -905,10 +932,11 @@ class DisplayManager extends MainStageMC
 			yend = rows-1;
 		}
 		
+		
+		bufferBD.fillRect(bufferBD.rect, 0x000000);
 		if(bgfill > 0){
 			bufferBD.copyPixels(tilebitdata[bgfill], new Rectangle(0, 0 , GameScreenWidth, GameScreenHeight) , new Point(tileWidth, tileHeight));
 		}else{
-			bufferBD.fillRect(bufferBD.rect, 0x000000);
 			bufferBD.fillRect(new Rectangle(0, 0, (colend + 1 - colstart) * tileWidth, (yend + 1 - yst) * tileHeight), fillcolour);
 		}
 
@@ -953,7 +981,7 @@ class DisplayManager extends MainStageMC
 		}
 		
 		
-		if (visibleLayer[4]) {
+		if (visibleLayer[5]) {
 			// Walkable Layer - Sets where 
 			var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
 			tileList1= tileList1.concat(tileList5);
@@ -962,7 +990,7 @@ class DisplayManager extends MainStageMC
 		drawAll(tileList1);
 
 		//
-		if (visibleLayer[5]) {
+		if (visibleLayer[4]) {
 			// Show warpgates
 			for (s in warpGates) { //for (var s in warpGates) {
 				for (t in s.warpLocations) { //for (var t in warpGates[s][3]) {
@@ -971,7 +999,7 @@ class DisplayManager extends MainStageMC
 
 					//var dtile:Class = getDefinitionByName("tl_wg_" + s)  as Class;
 					//var key:Int = tiledic[dtile][0];
-					var key:Int = tiledic.get("tl_wg_" + s).key;
+					var key:Int = tileManager.tiledic.get("tl_wg_" + s.warpInt).key;
 					
 					var dx:Float = (q * tileWidth)- cam_point.x + tileWidth;
 					var dy:Float = (z * tileHeight)- cam_point.y + tileHeight;
@@ -1050,13 +1078,10 @@ class DisplayManager extends MainStageMC
 
 	private function drawAll(superArray:Array<DrawObject>):Void{
 		var dispList:Array<DrawObject> = superArray;
-		var dlength:Int = dispList.length;
-		var len:DrawObject;
 		var pPo:Point = new Point(0,0);
 		var rRe:Rectangle = new Rectangle(0,0,0,0);
 		
-		for (z in 0...dlength) {
-			len = dispList[z];
+		for (len in dispList) {
 			pPo.x = len.xoff;
 			pPo.y = len.yoff;
 			rRe.width = len.width;
@@ -1065,7 +1090,7 @@ class DisplayManager extends MainStageMC
 		}			
 	}
 
-	function pastetile(z:Int,q:Int,layer:Int):Void{
+	private function pastetile(z:Int,q:Int,layer:Int):Void{
 		var whichBuffer:BitmapData = bufferBD;
 
 		var key:Int = map[z][q][layer];
@@ -1126,6 +1151,7 @@ class DisplayManager extends MainStageMC
 						}
 						
 						var tob:TileObject = tilenum[key];
+						
 						if (tob.walkType  == 1) { // walkable tile
 							//q -> xoffset
 							//z -> yoffset
@@ -1176,13 +1202,20 @@ class DisplayManager extends MainStageMC
 			if (z>=0) {
 				for (q in colstart...(colend+1)) {
 					if (q>=0) {
-						
 						if (map[z][q][layer]>0) {
 							//q -> xoffset
 							//z -> yoffset
 							
 							key = map[z][q][layer];
 							tob = tilenum[key];
+							
+							//--- selected tile has visiblity set to false
+							if (!visibleLayer[6]) {
+								if (key == selectedtile) {
+									continue;
+								}
+							}
+							//---
 
 							xoffset = (q * tileWidth)-campointx+tileWidth;
 							yoffset = (z * tileHeight)-campointy+tileHeight;
@@ -1195,7 +1228,6 @@ class DisplayManager extends MainStageMC
 							numKey = (z * columns) + q;
 							
 							if(anitileList[numKey] != null && tob.ani_hasAnimation){ //tilenum[key][4][0]){
-								
 								//ob.bitmapData = tilebitdata[key+"_"+anitileList[numKey][0]];
 								ob.bitmapData = tilebitdata[numSpacer(key, anitileList[numKey][0])];
 								if(anitileList[numKey][0]+1>anitileList[numKey][1]){
@@ -1206,6 +1238,7 @@ class DisplayManager extends MainStageMC
 							}else{
 								ob.bitmapData = tilebitdata[key];
 							}
+							
 							
 							ob.width = tilebitdata[key].width;
 							ob.height = tilebitdata[key].height;
@@ -1256,7 +1289,7 @@ class DisplayManager extends MainStageMC
 			return;
 		}
 		if(e.shiftKey){
-			addrowscol(e.keyCode);
+			addExtraRowsCols(e.keyCode);
 		}else if(e.ctrlKey){
 			trimmap(e.keyCode);
 		}
@@ -1268,7 +1301,8 @@ class DisplayManager extends MainStageMC
 		pressKeys.remove(e.keyCode);
 		 //delete pressKeys[ e.keyCode ];
 	} 
-	private function addrowscol(keypress:Int):Void{
+	
+	public function addExtraRowsCols(keypress:Int):Void{
 		var rowx:Array<Array<Int>> = new Array<Array<Int>>();
 		var tt:Int;
 		var restmap:Bool = false;
@@ -1346,15 +1380,19 @@ class DisplayManager extends MainStageMC
 		}
 		if (restmap) {
 			resetBitmap(true);
+			shwmenu();
 		}
 	}
-	private function trimmap(keypress:Int):Void{
+	public function trimmap(keypress:Int):Void{
 		var restmap:Bool = false;
 		var i:Int = 0;
 		var tt:Int;
 		switch (keypress) {
 			case 38 :
 			//up
+				if (rows < 2) {
+					return;
+				}
 				rows--;
 				map.shift();
 				restmap = true;
@@ -1375,6 +1413,9 @@ class DisplayManager extends MainStageMC
 
 			case 40 :
 			//bottom
+				if (rows < 2) {
+					return;
+				}
 				if(cam_point.y>0){
 					cam_point.y -=tileHeight;
 				}
@@ -1384,6 +1425,9 @@ class DisplayManager extends MainStageMC
 
 			case 37 :
 			//left
+				if (columns < 2) {
+					return;
+				}
 				columns--;
 				for (i in 0...rows) {
 					map[i].shift();
@@ -1419,6 +1463,9 @@ class DisplayManager extends MainStageMC
 
 			case 39 :
 			//right
+				if (columns < 2) {
+					return;
+				}
 				columns--;
 				if(cam_point.x>tileWidth){
 					cam_point.x -=tileWidth;
@@ -1431,6 +1478,7 @@ class DisplayManager extends MainStageMC
 		}
 		if (restmap) {
 			resetBitmap(true);
+			shwmenu();
 		}
 	}
 	
@@ -1455,6 +1503,32 @@ class DisplayManager extends MainStageMC
 	public function notEraseBrush():Void {
 		eraseBrush = false;
 		eraser.toggle(false);
+		
+		visibleLayer[6] = true; // not a layer, but selectedtilevisibility
+		visi_selectedTile_btt.toggle(true);
+	}
+	
+	public function updateSelectedTileInfo():Void {		
+		if(selectedtile != 0 && !eraseBrush){
+			this.s_tilenumtxt.text = selectedtile + "";
+			this.s_walktypetxt.text = tilenum[selectedtile].walkType + "";
+			
+			if (selected_bit != null) {
+				removeChild(selected_bit);
+			}		
+			
+			var bitImage:BitmapData = tilebitdata[selectedtile];
+			var bit:BitmapData = bitImage;
+			selected_bit = new Bitmap(bit);
+			selected_bit.x = 610;
+			selected_bit.y = 690;
+			selected_bit.width = tileWidth;
+			selected_bit.height = tileHeight;
+			addChild(selected_bit);		
+		}else {
+			this.s_tilenumtxt.text = "-";
+			this.s_walktypetxt.text = "-";
+		}
 	}
 
 	private function cctv(e:MouseEvent):Void{
@@ -1482,5 +1556,13 @@ class DisplayManager extends MainStageMC
 		cineEditMode_Point.x = 0;
 		cineEditMode_Point.y = 0;
 	}
+	
+	public function disableInterface():Void {
+		
+	}
+	private function optimizeGrass(e:MouseEvent):Void {
+		
+	}
+	
 	
 }

@@ -22,4 +22,8 @@ class Func
 		}
 		return r;
 	}
+	
+	public static function randInt(maxNum:Int):Int {
+		return Std.int(Math.random() * maxNum);
+	}
 }
