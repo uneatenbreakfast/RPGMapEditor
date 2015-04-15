@@ -43,15 +43,14 @@ class Settings_Panel extends MenuSettings
 		tintbgReset();		
 		
 		warpHolder = new ScrollerPane(symbo);
-		warpHolder.x = 5;
-		warpHolder.y = 472;
+		warpHolder.x = symbo.x;
+		warpHolder.y = symbo.y;
 		addChild(warpHolder);
 		
 		namemap.addEventListener(FocusEvent.FOCUS_OUT, mapnameRename);
 		author_txt.addEventListener(FocusEvent.FOCUS_OUT, mapnameRename);
 		tintnum.addEventListener(FocusEvent.FOCUS_OUT, tintbgReset);
-		
-		
+
 		add_top_btt.addEventListener(MouseEvent.CLICK, addRowCol);
 		add_left_btt.addEventListener(MouseEvent.CLICK, addRowCol);
 		add_right_btt.addEventListener(MouseEvent.CLICK, addRowCol);

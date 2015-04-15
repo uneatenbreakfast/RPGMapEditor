@@ -68,6 +68,8 @@ class DisplayManager extends MainStageMC
 	private var visi_selectedTile_btt:ToggleButton;
 	private var selected_bit:Bitmap;
 	
+	private var save_btt_toggle:ToggleButton;
+	
 	//
 	public var warp_selected:WarpGate = null;
 	private var activelayer:Int = 0;
@@ -105,6 +107,7 @@ class DisplayManager extends MainStageMC
 	private var saveBusy:Bool = false;	
 	
 	public var currentmap:String;
+	private var currentVersion:Int;
 	
 	private var visibleLayer:Array<Bool> = [true, true, true, true, true, false, true]; //[0,1,2,events, warpgates, walk, selectedtile_visibility]
 	
@@ -199,6 +202,15 @@ class DisplayManager extends MainStageMC
 		addChild(visi_selectedTile_btt);
 		
 		grassoptimizer_btt.addEventListener(MouseEvent.CLICK, optimizeGrass);
+
+		save_btt_toggle = new ToggleButton(save_btt);
+		save_btt_toggle.x = save_btt.x;
+		save_btt_toggle.y = save_btt.y;
+		save_btt_toggle.scrubCoord();
+		save_btt_toggle.addEventListener(MouseEvent.CLICK, saveMap);
+		save_btt_toggle.toggle(false);
+		addChild(save_btt_toggle);
+				
 		
 		// Buttons - layer visibility
 		var visi_layer_0:ToggleButton 	= new ToggleButton(visibility_lay_0_btt);
@@ -366,6 +378,7 @@ class DisplayManager extends MainStageMC
 	
 	public function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
 		updateMapName(newmapname);
+		currentVersion = 0;
 			
 		map = new Array<Array<Array<Int>>>();
 		rows = rownum;
@@ -425,6 +438,7 @@ class DisplayManager extends MainStageMC
 		updateMapName(mapName);
 		resetCamera();
 		buildmap(mapData);
+		currentVersion = Std.parseInt(version);
 		
 		showSheets();
 	}
@@ -451,6 +465,9 @@ class DisplayManager extends MainStageMC
 			if(fillcolour < 10000 && fillcolour != 0){
 				fillcolour = 0;
 				bgfill = Std.parseInt(head[2]);
+			}else {
+				// no background
+				bgfill = 0;
 			}
 			
 			// map:Array<Array<Array<Int>>> = new Array<Array<Array<Int>>>();
@@ -473,30 +490,33 @@ class DisplayManager extends MainStageMC
 
 			warpGates = new Array<WarpGate>();
 			var allWarpGates:Array<String> = pie[2].split("&");//warpGates = pie[2].split("&");
-			for (s in 0...allWarpGates.length) {				
-				var gates:Array<String> = allWarpGates[s].split(":");//warpGates[s] = allWarpGates[s].split(":");
-				var w:WarpGate = new WarpGate();				
-				w.x = Std.parseInt(gates[0]);
-				w.y = Std.parseInt(gates[1]);
-				w.toTownName = gates[2];// [2] is a string - town name
-				w.warpLocations = new Array<Point>();
-				/*
-				warpGates[s][0] = Std.parseInt(gates[0]);
-				warpGates[s][1] = Std.parseInt(gates[1]);
-				warpGates[s][2] = gates[2];// [2] is a string - town name
-				warpGates[s][3] = new Array<Point>();*/
-				
-				//warpGates[s][3] = allWarpGates[s][3].split("|");
-				var wLocs:Array<String> = gates[3].split("|");
-				for (t in 0...wLocs.length) {
-					var xy:Array<String> = wLocs[t].split(",");
-					var p:Point = new Point(Std.parseInt(xy[0]), Std.parseInt( xy[1]) );
-					//warpGates[s][3].push(p);
-					w.warpLocations.push(p);
+			if (pie[2] != "") {
+				// at least 1 warpgate
+				for (s in 0...allWarpGates.length) {				
+					var gates:Array<String> = allWarpGates[s].split(":");//warpGates[s] = allWarpGates[s].split(":");
+					var w:WarpGate = new WarpGate();				
+					w.x = Std.parseInt(gates[0]);
+					w.y = Std.parseInt(gates[1]);
+					w.toTownName = gates[2];// [2] is a string - town name
+					w.warpLocations = new Array<Point>();
+					/*
+					warpGates[s][0] = Std.parseInt(gates[0]);
+					warpGates[s][1] = Std.parseInt(gates[1]);
+					warpGates[s][2] = gates[2];// [2] is a string - town name
+					warpGates[s][3] = new Array<Point>();*/
+					
+					//warpGates[s][3] = allWarpGates[s][3].split("|");
+					var wLocs:Array<String> = gates[3].split("|");
+					for (t in 0...wLocs.length) {
+						var xy:Array<String> = wLocs[t].split(",");
+						var p:Point = new Point(Std.parseInt(xy[0]), Std.parseInt( xy[1]) );
+						//warpGates[s][3].push(p);
+						w.warpLocations.push(p);
+					}
+					
+					tileManager.newWarpTile(warpGates.length);
+					warpGates.push(w);				
 				}
-				
-				tileManager.newWarpTile(warpGates.length);
-				warpGates.push(w);				
 			}
 			
 			extendTilesLoop(0);
@@ -660,6 +680,7 @@ class DisplayManager extends MainStageMC
 			if (bar !=prePlace) {
 				if ((dy/tileHeight)<rows && ex>=0 && ex<columns) {
 					prePlace = bar;
+					save_btt_toggle.toggle(true); // there has been a change to the map -> save is now valid
 										
 					if (eraseBrush) {
 						// remove the tile
@@ -1120,7 +1141,6 @@ class DisplayManager extends MainStageMC
 			
 			//bufferBD.copyPixels(tilebitdata[key+"_"+toPaste], rec, pt);
 			bufferBD.copyPixels(tilebitdata[ numSpacer(key, toPaste) ], rec, pt);
-		
 		} else {
 			whichBuffer.copyPixels(tilebitdata[key], rec, pt,null,null,true);
 		}
@@ -1562,6 +1582,11 @@ class DisplayManager extends MainStageMC
 	}
 	private function optimizeGrass(e:MouseEvent):Void {
 		
+	}
+	private function saveMap(e:MouseEvent):Void {
+		currentVersion++;
+		saveMapManager.saveMap(authorName, currentmap, currentVersion, outputSTR());
+		save_btt_toggle.toggle(false);
 	}
 	
 	

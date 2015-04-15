@@ -39,26 +39,23 @@ class SaveMapManager
 		return thisManager;
 	}
 	
-	
-	
-	function MYSQL_updateMap(mapname:String, mapdata:String):Void{
+	public function saveMap(authorName:String, mapName:String, version:Int, mapdata:String):Void {
+		
 		var loader:URLLoader = new URLLoader();
 		var vrs:URLVariables = new URLVariables();
-		vrs.mapname = mapname;
+		vrs.func 	= "updateMap";
+		vrs.mapname = mapName;
 		vrs.mapdata = mapdata;
+		vrs.version = version;
+		vrs.author	= authorName;
 		
 		var urlreq:URLRequest = new URLRequest("http://main.local/RPG_MapUpdater.php");
 		urlreq.data = vrs;
 		urlreq.method = URLRequestMethod.POST;
 
-		
 		loader.load(urlreq);
 	}
 
-	//loader.addEventListener(Event.COMPLETE, phpcompleteHandler);
-	function phpcompleteHandler(e:Event):Void{
-		trace(e.target.data);
-	}
 	
 	public function outputmap(e:MouseEvent):Void {
 		saveBusy = true;
