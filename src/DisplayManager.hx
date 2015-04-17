@@ -33,6 +33,9 @@ class DisplayManager extends MainStageMC
 	private var gameEdgeLeft:Int;
 	private var gameEdgeRight:Int;
 	
+	public var windowWidth:Int;
+	public var windowHeight:Int;
+	
 	
 	private var stageManager:Main;
 	private var saveMapManager:SaveMapManager;
@@ -104,7 +107,7 @@ class DisplayManager extends MainStageMC
 				
 	private var partofSheet:Array<Dynamic> = [];
 	private var largerthanView:Array<Dynamic> = new Array<Dynamic>();
-	private var saveBusy:Bool = false;	
+	private var saveBusy:Bool = false;	// prevents clicks to modify the map
 	
 	public var currentmap:String;
 	private var currentVersion:Int;
@@ -161,6 +164,9 @@ class DisplayManager extends MainStageMC
 		tilebitdata 		= tileManager.tilebitdata;
 		tilenum 			= tileManager.tilenum;
 		spriteSheetSprites 	= tileManager.spriteSheetSprites;
+		
+		windowWidth = stage.stageWidth;
+		windowHeight = stage.stageHeight;
 		
 		//
 		groundclip.addChild(canvasBitmap);
@@ -375,7 +381,24 @@ class DisplayManager extends MainStageMC
 		//
 	}
 	
-	
+	public function newmap(rownum:Int, columnnum:Int, newmapname:String):Void {
+		
+		if (save_btt_toggle.isSelected) {
+			//  there has been a change - need to prompt save point
+			saveBusy = true;
+			
+			var m:ModalScreen = new ModalScreen();
+			var d:DialogueSave = new DialogueSave(m);
+			d.x = m.width / 2;
+			d.y = m.height / 2;
+			m.addChild(d);
+			
+			addChild(m);
+		}else {
+			rebuildmap(rownum, columnnum , newmapname);
+		}
+		
+	}
 	public function rebuildmap(rownum:Int,columnnum:Int,newmapname:String):Void{
 		updateMapName(newmapname);
 		currentVersion = 0;
@@ -1588,6 +1611,9 @@ class DisplayManager extends MainStageMC
 		saveMapManager.saveMap(authorName, currentmap, currentVersion, outputSTR());
 		save_btt_toggle.toggle(false);
 	}
-	
+	public function cancelSaveDialogue(mo:ModalScreen):Void {
+		saveBusy = false;
+		removeChild(mo);
+	}
 	
 }

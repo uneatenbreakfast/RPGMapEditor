@@ -27,7 +27,7 @@ class NewMap_Panel extends NewMap_Panelmc
 			if (r == 0 || c == 0) {
 				addChild(new ErrorMessage("Rows and Columns must not be Zero", 6, 272));
 			}else {
-				displayManager.rebuildmap(r, c , this.namemap.text);
+				displayManager.newmap(r, c , this.namemap.text);
 			}
 		}else {
 			addChild(new ErrorMessage("Missing map name", 6, 272));
