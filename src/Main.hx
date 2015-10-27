@@ -4,6 +4,9 @@ import flash.Lib;
 import flash.display.Sprite;
 import flash.events.KeyboardEvent;
 
+import flash.system.Worker;
+import flash.system.WorkerDomain;
+
 /**
  * ...
  * @author Nelson

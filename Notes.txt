@@ -1,0 +1,2 @@
+In order for concurrency to work in FlashDevelop, you need to set it from the debug to the release configuration.
+- Then once it works, then try setting it back to get the output to show in the output panel

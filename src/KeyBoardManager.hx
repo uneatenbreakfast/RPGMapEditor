@@ -3,7 +3,7 @@ package ;
 import flash.events.KeyboardEvent;
 import flash.Lib;
 import flash.system.System;
-import flash.desktop.NativeApplication;
+
 /**
  * ...
  * @author Nelson
@@ -27,7 +27,7 @@ class KeyBoardManager
 		var key:UInt = e.keyCode;
 		switch(key) {
 			case 27: //esc
-				NativeApplication.nativeApplication.exit();
+				//NativeApplication.nativeApplication.exit();
 		}
 	}
 	

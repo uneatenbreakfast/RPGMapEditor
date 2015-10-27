@@ -1,6 +1,7 @@
 package ;
 import flash.geom.Point;
-
+import flash.utils.Object;
+import haxe.remoting.AMFConnection.registerClassAlias;
 /**
  * ...
  * @author Nelson
@@ -35,7 +36,7 @@ class TileObject
 	
 	public function new() 
 	{
-		
+		registerClassAlias("TileObject", TileObject);
 	}
 	public function setSpriteSheet(useSheet:Bool, startCOORD:Point, endCOORD:Point, spriteSheetClass:String, needtoMakeTileDIC:Bool ):Void {
 		spr_useSheet = useSheet;
@@ -61,6 +62,38 @@ class TileObject
 		//tiledic[classname][4][1] = isNOTaLoop - true:NOTLOOP false:isLoop
 		//tiledic[classname][4][2] = afterAnimationTile
 		//tiledic[classname][4][3] = syncTile
+	}
+	
+	public static function makeTileObject(ob:Object):TileObject {
+		
+		var t:TileObject = new TileObject();
+		t.key = ob.key;
+		t.xoffset = ob.xoffset;
+		t.yoffset = ob.yoffset;
+		t.sendToGround = ob.sendToGround;
+		
+		t.ani_hasAnimation = ob.ani_hasAnimation;
+		t.ani_isNotaLoop = ob.ani_isNotaLoop;
+		t.ani_afterAnimationTile = ob.ani_afterAnimationTile;
+		t.ani_syncTile = ob.ani_syncTile;
+		
+		t.totalFrames = ob.totalFrames;
+		t.walkType = ob.walkType;
+		t.extendsStandardTile = ob.extendsStandardTile;
+		t.width = ob.width;
+		t.height = ob.height;
+		t.spriteSheet = ob.spriteSheet;
+			
+		t.spr_useSheet = ob.spr_useSheet;
+		t.spr_startCOORD = ob.spr_startCOORD;
+		t.spr_endCOORD = ob.spr_endCOORD;
+		t.spr_SheetClass = ob.spr_SheetClass;
+		t.spr_needToMakeTileDic = ob.spr_needToMakeTileDic;
+			
+		t.depthPoint = ob.depthPoint;
+		t.className = ob.className;
+		
+		return t;
 	}
 	
 }

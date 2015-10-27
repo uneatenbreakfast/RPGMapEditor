@@ -8,9 +8,9 @@
     <movie fps="30" />
     <movie width="1800" />
     <movie height="1000" />
-    <movie version="3" />
-    <movie minorVersion="4" />
-    <movie platform="AIR" />
+    <movie version="11" />
+    <movie minorVersion="5" />
+    <movie platform="Flash Player" />
     <movie background="#FFFFFF" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
@@ -52,7 +52,7 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="Custom" />
+    <option testMovie="ExternalPlayer" />
     <option testMovieCommand="Run.bat" />
   </options>
   <!-- Plugin storage -->

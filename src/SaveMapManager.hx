@@ -2,9 +2,7 @@ package ;
 
 import flash.events.Event;
 import flash.events.MouseEvent;
-import flash.filesystem.File;
-import flash.filesystem.FileStream;
-import flash.filesystem.FileMode;
+
 import flash.net.URLLoader;
 import flash.net.URLRequest;
 import flash.net.URLVariables;
@@ -18,10 +16,10 @@ class SaveMapManager
 	private static var thisManager:SaveMapManager;
 	private var displayManager:DisplayManager;
 	
-	private var dskTopFileStream:FileStream = new FileStream();
+
 	private var fileString:String = "H:\\WorkSpace\\RPG\\src\\maps.as";
 
-	private var dskTopFile:File = File.documentsDirectory;
+
 	
 	private var currentmap:String = "";
 	
@@ -29,7 +27,7 @@ class SaveMapManager
 
 	public function new() 
 	{
-		dskTopFile = dskTopFile.resolvePath(fileString);
+		//dskTopFile = dskTopFile.resolvePath(fileString);
 		displayManager = DisplayManager.getInstance();
 	}
 	public static function getInstance():SaveMapManager {

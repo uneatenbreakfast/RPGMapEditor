@@ -1,25 +1,39 @@
 package ;
+import flash.display.Loader;
 import flash.display.MovieClip;
 import flash.display.Sprite;
 import flash.display.DisplayObject;
+import flash.errors.Error;
+
 import flash.events.Event;
+
 import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+
+import flash.Lib;
+
 import flash.net.URLRequest;
+import flash.system.ApplicationDomain;
+import flash.system.LoaderContext;
 import flash.system.MessageChannel;
+import flash.utils.ByteArray;
 import flash.utils.Dictionary;
 import flash.utils.Object;
+
 import com.efnx.FpsBox;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import fl.motion.Color;
 import flash.geom.ColorTransform;
 import flash.filters.*;
+
 import admin.MyLoader;
 import Maps;
+
 import flash.system.Worker;
 import flash.system.WorkerDomain;
+import haxe.remoting.AMFConnection.registerClassAlias;
 
 class TileManager extends Sprite
 {
@@ -65,7 +79,19 @@ class TileManager extends Sprite
 	
 	// LOAD THE TILESET
 	private var TileSetL:MyLoader;
+	private var emptyWorkerSwf:MyLoader;
 	// LOAD THE TILESET
+	
+	
+	// Concurrency
+	private var bm:MessageChannel;
+	private var mb:MessageChannel;
+	private var imageBytes:ByteArray;
+	
+
+	private var con_key:Dynamic;
+	private var con_Mode:String = null;
+	
 
 	public function new() :Void
 	{			
@@ -80,43 +106,187 @@ class TileManager extends Sprite
 	}
 	
 	public function init():Void {
-		// load the SWF file
-		var req4:URLRequest = new URLRequest("TileSets.swf");
-		TileSetL = new MyLoader(req4, "TileSet");
-		TileSetL.addEventListener("LoadDone", Engine); // Once loaded; initiate the bitmap creation Engine
+		registerClassAlias("TileObject", TileObject);
+		registerClassAlias("Point", Point);
+		registerClassAlias("BitmapData", BitmapData);
+		
+		if (Worker.current.isPrimordial) {
+			
+			var req4:URLRequest = new URLRequest("TileSets.swf");
+			TileSetL = new MyLoader(req4, "TileSet");
+			TileSetL.addEventListener("LoadDone", Engine); // Once loaded; initiate the bitmap creation Engine			
+		}else {
+			// This this the background worker thread - Don't load the tileset files
+			// Do the worker thread stuff
+			trace("Started [BACK THREAD] supposably  : Thread 2 of 2");		
+			
+			// main sends messages to this worker
+			mb = Worker.current.getSharedProperty("mtb");
+			mb.addEventListener(Event.CHANNEL_MESSAGE, onMainToBack);
+			
+			// this bg worker sending msg back to main
+			bm = Worker.current.getSharedProperty("btm");
+			//bm.addEventListener(Event.CHANNEL_MESSAGE, onBackToMain);
+			
+			imageBytes = Worker.current.getSharedProperty("imageBytes");
+			
+			bm.send("init");
+		}
 	}
-
-	
 	private function Engine(evC:Event):Void {
-		//for (i in Maps.gm_maps) {
-			//gm_maps[i] = Maps.gm_maps[i];
-		//}
+		// Only the MAIN thread gets here, the worker thread doesn't
 		
-		//tiledic = MovieClip(TileSetL.loader.content).tiledic;
-		//spriteSheetWalkables = MovieClip(TileSetL.loader.content).spriteSheetWalkables;
-		//spriteSheets = MovieClip(TileSetL.loader.content).spriteSheets;		
-		
-		 // create the background worker
-		/*	*/
-		var worker:Worker = WorkerDomain.current.createWorker(TileSetL.loader.contentLoaderInfo.bytes);
-		var bm:MessageChannel = worker.createMessageChannel(Worker.current);
-		var mb:MessageChannel = Worker.current.createMessageChannel(worker);
+		// create the background worker
+		var worker:Worker = WorkerDomain.current.createWorker(Lib.current.loaderInfo.bytes);
+		bm = worker.createMessageChannel(Worker.current);
+		mb = Worker.current.createMessageChannel(worker);
 		
 		bm.addEventListener(Event.CHANNEL_MESSAGE, onBackToMain);
-		worker.start();
-	
-		function onBackToMain(e:Event):Void {
-			
-		}
-		 
-
-	   
 		
-		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
+		worker.setSharedProperty("mtb", mb);
+		worker.setSharedProperty("btm", bm);
+		
+		imageBytes = new ByteArray();
+		imageBytes.shareable = true;
+		worker.setSharedProperty("imageBytes", imageBytes);
+				
+		worker.start();
+		trace("Started [MAIN Thread] : Thread 1 of 2");
+		// concurrency END
+	}
+	
+	// concurrency
+	private function onBackToMain(e:Event):Void {
+		//trace(Worker.current.isPrimordial, "[BACK TO MAIN] received message from [BACK THREAD]");	
+		var firstMessageHeader:Dynamic = bm.receive();
+		
+		if (con_Mode == null) {
+			switch(firstMessageHeader) {
+				case "start_spriteSheets":
+					con_Mode = "start_spriteSheets";
+				
+				case "Start_TileProcessing":
+					con_Mode = "Start_TileProcessing";
+					
+				case "start_tilebitdata":
+					con_Mode = "start_tilebitdata";
+					
+				case "start_partofSheet":
+					con_Mode = "start_partofSheet";
+					
+				case "start_looseTiles":
+					con_Mode = "start_looseTiles";
+					
+				case "init":
+					// thread is ready to work
+					trace("Worker thread ready, initializing");
+					var mv:MovieClip = cast(TileSetL.loader.content , MovieClip);
+					mb.send( TileSetL.loader.contentLoaderInfo.bytes );		
+			}
+		}else {
+			if (firstMessageHeader == "Done_TileProcessing") {
+				trace("[ DONE CONCURRENT TILE PROCESSING (1/5) ]");
+				con_Mode = null;
+				return;
+			}else if (firstMessageHeader == "stop_spriteSheets") {
+				trace("[ DONE CONCURRENT - Spritesheets (2/5) ]");
+				con_Mode = null;
+				return;
+			}else if (firstMessageHeader == "stop_partofSheet") {
+				trace("[ DONE CONCURRENT - partofsheet (4/5) ]");
+				con_Mode = null;
+				return;
+			}else if (firstMessageHeader == "stop_tilebitdata") {
+				trace("[ DONE CONCURRENT - tilebitdata (3/5) ]");
+				con_Mode = null;
+				return;
+			}else if (firstMessageHeader == "stop_looseTiles") {
+				trace("[ DONE CONCURRENT - looseTiles (5/5) ]");
+				displayManager.turnOn();	
+				con_Mode = null;
+				return;
+			}
+			
+			switch(con_Mode) {
+				case "start_spriteSheets":
+					//-------
+					spriteSheets.push(firstMessageHeader);
+					//-------
+				case "Start_TileProcessing":
+					//-------
+					if (con_key == null) {
+						con_key = firstMessageHeader;
+					}else {
+						var b:ByteArray = firstMessageHeader;					
+						var t:TileObject = TileObject.makeTileObject( b.readObject());
+						b.position = 0;
+						
+						tiledic.set(con_key, t);
+						con_key = null;
+						
+						var key:Int = t.key;
+						tilenum[key] = t;
+					}
+					//-------
+				case "start_tilebitdata":
+					//-------
+					if (con_key == null) {
+						con_key = firstMessageHeader;
+					}else {
+						var width:Int = firstMessageHeader;
+						var height:Int = bm.receive();
+						var b:ByteArray = bm.receive();
+						b.position = 0;
+						
+						
+						var bb:BitmapData = new BitmapData(width, height);
+						bb.setPixels(new Rectangle(0, 0, width, height), b);
+						
+						tilebitdata.set(cast(con_key, Int), bb);												
+						con_key = null;
+					}
+					//-------	
+				case "start_partofSheet":
+					//-------
+					partofSheet.push(firstMessageHeader);
+					//-------		
+				case "start_looseTiles":
+					//-------
+					looseTiles.push(firstMessageHeader);
+					//-------	
+				case "init":
+					// thread is ready to work
+					trace("Worker thread ready, initializing");
+					var mv:MovieClip = cast(TileSetL.loader.content , MovieClip);
+					mb.send( TileSetL.loader.contentLoaderInfo.bytes );		
+					
+			}
+		}
+	} 
+	private function onMainToBack(e:Event):Void {
+		if(mb.messageAvailable){
+			trace(Worker.current.isPrimordial, "is false || [MAIN TO BACK]received message from [MAIN THREAD]");
+			
+			var AD:ApplicationDomain = ApplicationDomain.currentDomain;
+			var context:LoaderContext = new LoaderContext( false, AD );
+
+			var lb:Loader = new Loader();
+			lb.contentLoaderInfo.addEventListener (Event.COMPLETE, loadedBytes);
+			lb.loadBytes(mb.receive(), context);
+		}
+	} 
+	private function loadedBytes(e:Event):Void {
+		loadAssets( cast(e.target.content , MovieClip)    );
+	}
+	
+	// end concurrency
+	
+	private function loadAssets(tilsetmc:MovieClip):Void {		
+		var tileMovieClip:MovieClip = tilsetmc;// cast(TileSetL.loader.content , MovieClip);		
 		var tileDicArr:Array<Dynamic> = cast (tileMovieClip.tiledic, Array<Dynamic> );
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
 		spriteSheetWalkables = cast (tileMovieClip.spriteSheetWalkables, Array<Dynamic> );
-		
+				
 		// Tilesets
 		var tilesetsDic = cast (tileMovieClip.tilesets, Array<Dynamic> );
 		tilesetArr = cast (tileMovieClip.tilesetArr, Array<Dynamic> );
@@ -152,7 +322,7 @@ class TileManager extends Sprite
 				t.setSpriteSheet(true, new Point(tileDicArr[i][10][1][0], tileDicArr[i][10][1][1]), new Point(tileDicArr[i][10][2][0], tileDicArr[i][10][2][1]), tileDicArr[i][10][3], tileDicArr[i][10][4]);
 			}
 		}
-				
+		
 		var spritesheettilesMade:Array<TileObject> = new Array<TileObject>();
 		
 		
@@ -190,14 +360,14 @@ class TileManager extends Sprite
 					var spname:String = className;
 					if(spriteSheetSprites[spname] == null){
 						//spriteSheetSprites[spname] = [];
-
 						var cF = Type.resolveClass(className);						
 						var tie = Type.createEmptyInstance(cF);
 						spriteSheetSprites[spname] = new BitmapData(sheetcols * 50, sheetrows * 50, true, 0x000000);
 						var mtx:Matrix = new Matrix();
 
 						spriteSheetSprites[spname].draw(tie,mtx);
-					}				
+					}
+					
 					//trace("--",num);
 					for (rrs in 0...sheetrows) {
 						for (clms in 0...sheetcols) {
@@ -246,16 +416,80 @@ class TileManager extends Sprite
 			//tiledic[m[0]] = m[1];
 			tiledic[spr.className] = spr;
 		}
-
 		//------
-
 		var rect:Dynamic = {}
 		for (e in tiledic) {
 			setTileProps(e.className, rect);
 		}
+
+		// Send processed data back to Main thread
+		//bm.send(tiledic);
 		
-		//
-		displayManager.turnOn();
+		//--------
+		// tiledic
+		bm.send("Start_TileProcessing");
+		for (key in tiledic.keys()) {
+			//
+			bm.send(key);
+			
+			var bt:ByteArray = new ByteArray();
+			bt.writeObject( tiledic.get(key) );			
+			//
+			bm.send( bt );
+		}
+		bm.send("Done_TileProcessing");
+		//--------
+		
+		//--------
+		bm.send("start_spriteSheets");
+		for (str in spriteSheets) {
+			bm.send(str);
+		}
+		bm.send("stop_spriteSheets");
+		//--------
+		
+		//--------
+		bm.send("start_tilebitdata");
+		for (bit in tilebitdata.keys()) {
+			var im:BitmapData = tilebitdata.get(bit);
+			//var ib:String = im.getPixels(new Rectangle(0, 0, im.width, im.height)).toString();
+			
+			var bty:ByteArray = new ByteArray();
+			bty.writeObject(im);
+			
+			bm.send(bit);
+			bm.send(im.width);
+			bm.send(im.height);
+			bm.send(im.getPixels(new Rectangle(0,0,im.width, im.height)));
+		}
+		bm.send("stop_tilebitdata");
+		//--------
+		
+		//--------
+		bm.send("start_partofSheet");
+		for (str in partofSheet) {
+			bm.send(str);
+		}
+		bm.send("stop_partofSheet");
+		//--------
+		
+		bm.send("start_looseTiles");
+		for (str in looseTiles) {
+			bm.send(str);
+		}
+		bm.send("stop_looseTiles");
+		//--------
+		
+		/*
+		*tiledic
+		*tilenum
+		*tilebitdata
+		
+		*spriteSheets
+	
+		*partofSheet
+		*looseTiles
+		*/
 	}
 	
 	

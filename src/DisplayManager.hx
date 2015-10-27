@@ -13,7 +13,7 @@ import flash.display.BitmapData;
 import flash.Lib;
 import Omni;
 
-import com.demonsters.debugger.MonsterDebugger;
+//import com.demonsters.debugger.MonsterDebugger;
 
 /**
  * ...
@@ -22,7 +22,6 @@ import com.demonsters.debugger.MonsterDebugger;
 class DisplayManager extends MainStageMC
 {
 	private static var thisManager:DisplayManager;
-	
 	
 	public inline static var tileHeight = 50;
 	public inline static var tileWidth = 50;
@@ -137,8 +136,10 @@ class DisplayManager extends MainStageMC
 	{			
 		super();
 		
+		/*
 		MonsterDebugger.initialize(this);
         MonsterDebugger.trace(this, "Hello World!");
+		*/
 		
 		columns = 26;
 		rows = 14;
