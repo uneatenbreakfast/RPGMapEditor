@@ -71,7 +71,7 @@ class DisplayManager extends MainStageMC
 	private var visi_selectedTile_btt:ToggleButton;
 	private var selected_bit:Bitmap;
 	
-	private var save_btt_toggle:ToggleButton;
+	public var save_btt_toggle:ToggleButton;
 	
 	//
 	public var warp_selected:WarpGate = null;
@@ -387,13 +387,11 @@ class DisplayManager extends MainStageMC
 			//  there has been a change - need to prompt save point
 			saveBusy = true;
 			
-			var m:ModalScreen = new ModalScreen();
-			var d:DialogueSave = new DialogueSave(m);
-			d.x = m.width / 2;
-			d.y = m.height / 2;
-			m.addChild(d);
-			
-			addChild(m);
+			// Prompt save
+			var d:DialogueSave = promptSave();
+			d.continueFunction = rebuildmap;
+			d.continueParams = [rownum, columnnum , newmapname];
+			//
 		}else {
 			rebuildmap(rownum, columnnum , newmapname);
 		}
@@ -419,6 +417,7 @@ class DisplayManager extends MainStageMC
 		isBusy = false;
 		
 		//
+		save_btt_toggle.toggle(false);
 		showSheets();
 	}
 
@@ -463,6 +462,7 @@ class DisplayManager extends MainStageMC
 		buildmap(mapData);
 		currentVersion = Std.parseInt(version);
 		
+		save_btt_toggle.toggle(false);
 		showSheets();
 	}
 	public function updateMapName(mapName:String):Void {
@@ -1614,6 +1614,19 @@ class DisplayManager extends MainStageMC
 	public function cancelSaveDialogue(mo:ModalScreen):Void {
 		saveBusy = false;
 		removeChild(mo);
+	}
+	public function promptSave():DialogueSave {
+		var m:ModalScreen = new ModalScreen();
+		var d:DialogueSave = new DialogueSave(m);
+		d.x = m.width / 2;
+		d.y = m.height / 2;
+		//d.continueFunction = getMapFromDB;
+		//d.continueParams = [key];
+		m.addChild(d);
+		
+		addChild(m);
+		
+		return d;
 	}
 	
 }

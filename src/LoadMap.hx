@@ -15,6 +15,8 @@ class LoadMap extends Maplist
 	private var displayManager:DisplayManager;
 	private var maplists:ScrollerPane;
 	
+	private var loadingbaranimation:LoadingBar;
+	
 	public function new() 
 	{
 		super();
@@ -25,6 +27,12 @@ class LoadMap extends Maplist
 		maplists.x = symbo.x;
 		maplists.y = symbo.y;
 		addChild(maplists);
+		//
+		loadingbaranimation = new LoadingBar();
+		loadingbaranimation.x = 8.5;
+		loadingbaranimation.y = 45;
+		addChild(loadingbaranimation);
+		
 		
 		//
 		
@@ -37,11 +45,19 @@ class LoadMap extends Maplist
 		urlreq.method = URLRequestMethod.POST;
 		loader.addEventListener(Event.COMPLETE, loadedMapList);
 		loader.load(urlreq);
+		
+		trace("SENDING Map Request");
 	}
 	
-	private function loadedMapList(e:Event):Void{
+	private function loadedMapList(e:Event):Void {
+		removeChild(loadingbaranimation);
+		
+		
+		
 		var results:Array<String> = e.currentTarget.data.split("|");
 		results.pop();
+		
+		trace("RECEIVING Map Request", results);
 		
 		var inum:Int = 0;
 		for (i in results) {
@@ -67,12 +83,19 @@ class LoadMap extends Maplist
 	}
 	
 	private function mapSel(e:MouseEvent):Void {
-		var mc:List_btt_LoadMaps = cast(e.currentTarget, List_btt_LoadMaps);
 		
+		var mc:List_btt_LoadMaps = cast(e.currentTarget, List_btt_LoadMaps);
 		var key:Int = Std.parseInt( mc.key_txt.text );
 		
-		displayManager.disableInterface();		
-		getMapFromDB(key);		
+		if (displayManager.save_btt_toggle.isSelected) {
+			// there is unsaved changed
+			var d:DialogueSave = displayManager.promptSave();	
+			d.continueFunction = getMapFromDB;
+			d.continueParams = [key];
+			//
+		}else {
+			getMapFromDB(key);
+		}
 	}
 	
 	private function getMapFromDB(key:Int):Void {

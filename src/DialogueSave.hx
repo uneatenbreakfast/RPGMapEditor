@@ -9,6 +9,9 @@ class DialogueSave extends Dialogue_Save
 {
 	private var modal:ModalScreen;
 	
+	public var continueFunction:Dynamic;
+	public var continueParams:Array<Dynamic>;
+	
 	public function new(modalScreen:ModalScreen) 
 	{
 		super();
@@ -24,10 +27,17 @@ class DialogueSave extends Dialogue_Save
 	}
 	private function noclick(e:MouseEvent):Void {
 		// don't save -> continue 
-	}
-	private function cancelclick(e:MouseEvent):Void {
-		// close modal screen
+		if (continueParams.length == 3) {
+			continueFunction(continueParams[0], continueParams[1], continueParams[2]);// rebuild map
+		}else {
+			continueFunction(continueParams[0]);// getMapFromDB
+		}
 		
+		
+		cancelclick();
+	}
+	private function cancelclick(e:MouseEvent=null):Void {
+		// close modal screen
 		DisplayManager.getInstance().cancelSaveDialogue(modal);
 	}
 	

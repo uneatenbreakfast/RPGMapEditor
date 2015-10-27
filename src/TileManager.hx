@@ -7,6 +7,7 @@ import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.net.URLRequest;
+import flash.system.MessageChannel;
 import flash.utils.Dictionary;
 import flash.utils.Object;
 import com.efnx.FpsBox;
@@ -90,18 +91,25 @@ class TileManager extends Sprite
 		//for (i in Maps.gm_maps) {
 			//gm_maps[i] = Maps.gm_maps[i];
 		//}
-
+		
 		//tiledic = MovieClip(TileSetL.loader.content).tiledic;
 		//spriteSheetWalkables = MovieClip(TileSetL.loader.content).spriteSheetWalkables;
 		//spriteSheets = MovieClip(TileSetL.loader.content).spriteSheets;		
 		
 		 // create the background worker
-		 /*
-	   var workerBytes:MovieClip = TileSetL.loader.content;
-	   var bgWorker:Worker = WorkerDomain.current.createWorker(workerBytes);
-	   bgWorker.addEventListener(Event.WORKER_STATE, function() { trace("HI"); } );
-	   bgWorker.start();
-	   */
+		/*	*/
+		var worker:Worker = WorkerDomain.current.createWorker(TileSetL.loader.contentLoaderInfo.bytes);
+		var bm:MessageChannel = worker.createMessageChannel(Worker.current);
+		var mb:MessageChannel = Worker.current.createMessageChannel(worker);
+		
+		bm.addEventListener(Event.CHANNEL_MESSAGE, onBackToMain);
+		worker.start();
+	
+		function onBackToMain(e:Event):Void {
+			
+		}
+		 
+
 	   
 		
 		var tileMovieClip:MovieClip = cast(TileSetL.loader.content , MovieClip);		
