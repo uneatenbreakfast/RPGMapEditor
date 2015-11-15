@@ -34,7 +34,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 	private	var bitsheet:Bitmap;
 	private var indiviTileSheet:Sprite;
 	private var follower:SelectorCD;
-	private var sheetholder:Sprite;
+	private var sheetholder:ScrollerPane;
 	
 	private var looseTilesInGroups:Array<Int> = new Array<Int>();
 		
@@ -47,7 +47,8 @@ class SpriteSheetManager extends ShowSpriteSheets
 		// Set up tileset buttons
 		var allTilesets:Array<List_btt> = new Array<List_btt>();
 		
-		for (i in tileManager.tilesetArr) {
+		//for (i in tileManager.tilesetArr) {
+		for(i in tileManager.tilesets.keys()){
 			var tt:List_btt = new List_btt();
 			tt.txt.mouseEnabled = false;
 			tt.txt.text = i;
@@ -91,13 +92,14 @@ class SpriteSheetManager extends ShowSpriteSheets
 		// END set up tileset buttons
 		
 		// 
-		var tilesetArr:Array<Dynamic> = tileManager.tilesetArr;
-		for (tn in tilesetArr) {
-			var t:Array<Int> = tileManager.tilesets[tn];
+		//var tilesetArr:Array<Dynamic> = tileManager.tilesetArr;
+		//for (tn in tilesetArr) {
+		for(tn in tileManager.tilesets){
+			var t:Array<Int> = tn;// tileManager.tilesets[tn];
 			looseTilesInGroups = looseTilesInGroups.concat(t);
 		}		
 		//		
-		sheetholder = new Sprite();
+		sheetholder = new ScrollerPane(masker);
 		bitsheet = new Bitmap();
 		indiviTileSheet = new Sprite();
 		sheetholder.addChild(indiviTileSheet);
@@ -128,7 +130,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 		sheettileSwap(e.currentTarget.type, e.currentTarget.label, e.currentTarget.data);
 	}
 	private function sheettileSwap(type:String, lab:String, data:Int ):Void {
-		displayManager.selectedTileSet = [lab, data+"", type];
+		displayManager.selectedTileSet = [lab, data + "", type];
 		
 		if (type == "spritesheet") {
 			// spritesheet

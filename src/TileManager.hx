@@ -67,7 +67,7 @@ class TileManager extends Sprite
 
 	public var spriteSheets:Array<String> = new Array<String>(); //spriteSheets.push("tl_grasslands")
 	//public var tilesets:Array<Dynamic> = new Array<Dynamic>();
-	public var tilesetArr:Array<Dynamic> = new Array<Dynamic>();
+	//public var tilesetArr:Array<Dynamic> = new Array<Dynamic>();
 	private var spriteSheetWalkables:Array<Dynamic> = new Array<Dynamic>();
 	public var tilesets:Map<String, Array<Int>>;
 	
@@ -153,6 +153,19 @@ class TileManager extends Sprite
 		worker.start();
 		trace("Started [MAIN Thread] : Thread 1 of 2");
 		// concurrency END
+		
+		// Get the tileset objects list
+		// since it's just an array, we don't need to do any heavy processing to retrieve it so no need for concurrency
+		var tileMovieClip:MovieClip = cast(evC.target.loader.content , MovieClip);
+		
+		var tilesetsDic = cast (tileMovieClip.tilesets, Array<Dynamic> );
+		var tilesetArr = cast (tileMovieClip.tilesetArr, Array<Dynamic> );
+		tilesets = new Map<String, Array<Int>>();
+		for (i in tilesetArr) {
+			tilesets.set(i, tilesetsDic[i] );
+		}
+		
+		//
 	}
 	
 	// concurrency
@@ -176,6 +189,9 @@ class TileManager extends Sprite
 					
 				case "start_looseTiles":
 					con_Mode = "start_looseTiles";
+					
+				case "start_spriteSheetSprites":
+					con_Mode = "start_spriteSheetSprites";
 					
 				case "init":
 					// thread is ready to work
@@ -202,7 +218,14 @@ class TileManager extends Sprite
 				return;
 			}else if (firstMessageHeader == "stop_looseTiles") {
 				trace("[ DONE CONCURRENT - looseTiles (5/5) ]");
+				con_Mode = null;
+				return;
+			}
+			else if (firstMessageHeader == "stop_spriteSheetSprites") {
+				trace("[ DONE CONCURRENT - spriteSheetSprites (6/6) ]");
+				//
 				displayManager.turnOn();	
+				//
 				con_Mode = null;
 				return;
 			}
@@ -254,6 +277,26 @@ class TileManager extends Sprite
 					//-------
 					looseTiles.push(firstMessageHeader);
 					//-------	
+				case "start_spriteSheetSprites":
+					//-------
+					if (con_key == null) {
+						con_key = firstMessageHeader;
+					}else {
+						var width:Int = firstMessageHeader;
+						var height:Int = bm.receive();
+						var b:ByteArray = bm.receive();
+						b.position = 0;
+						
+						var bb:BitmapData = new BitmapData(width, height);
+						bb.setPixels(new Rectangle(0, 0, width, height), b);
+						
+						spriteSheetSprites.set(cast(con_key, String), bb);	
+						
+						trace("Setting", con_key, bb);
+						
+						con_key = null;
+					}
+					//-------	
 				case "init":
 					// thread is ready to work
 					trace("Worker thread ready, initializing");
@@ -287,14 +330,7 @@ class TileManager extends Sprite
 		var tileKeysArr:Array<Dynamic> = cast (tileMovieClip.tileKeysArr, Array<Dynamic> );
 		spriteSheetWalkables = cast (tileMovieClip.spriteSheetWalkables, Array<Dynamic> );
 				
-		// Tilesets
-		var tilesetsDic = cast (tileMovieClip.tilesets, Array<Dynamic> );
-		tilesetArr = cast (tileMovieClip.tilesetArr, Array<Dynamic> );
-		tilesets = new Map<String, Array<Int>>();
-		for (i in tilesetArr) {
-			tilesets.set(i, tilesetsDic[i] );
-		}
-				
+					
 		// create the tiledic in Map for Haxe
 		for (i in tileKeysArr) {
 			var t:TileObject = new TileObject();
@@ -478,6 +514,21 @@ class TileManager extends Sprite
 			bm.send(str);
 		}
 		bm.send("stop_looseTiles");
+		//--------
+		
+		bm.send("start_spriteSheetSprites");
+		for (key in spriteSheetSprites.keys()) {
+			bm.send(key);
+
+			var im:BitmapData = spriteSheetSprites.get((key));
+			var bty:ByteArray = new ByteArray();
+			bty.writeObject(im);
+			
+			bm.send(im.width);
+			bm.send(im.height);
+			bm.send(im.getPixels(new Rectangle(0, 0, im.width, im.height)));
+		}
+		bm.send("stop_spriteSheetSprites");
 		//--------
 		
 		/*

@@ -598,8 +598,6 @@ class DisplayManager extends MainStageMC
 		return strmap;
 	}
 	
-	
-	
 	private function extendTilesLoop(layer:Int):Void{
 		for (i in 0...rows) {
 			for (o in 0...columns) {
