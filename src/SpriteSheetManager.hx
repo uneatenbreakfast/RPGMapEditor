@@ -116,7 +116,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 		sheetholder.addChild(selector);
 
 		sheetholder.addEventListener(MouseEvent.MOUSE_DOWN, dclick);
-		sheetholder.addEventListener(MouseEvent.MOUSE_UP, uclick);
+		//sheetholder.addEventListener(MouseEvent.MOUSE_UP, uclick);
 		sheetholder.addEventListener(MouseEvent.MOUSE_MOVE, fol);
 		
 		if (displayManager.selectedTileSet != null) {
@@ -210,6 +210,8 @@ class SpriteSheetManager extends ShowSpriteSheets
 	private function changeSheet(sheetName:String, sheetNum:Int):Void {
 		clearSheet();
 		
+		sheetholder.addEventListener(MouseEvent.MOUSE_UP, uclick);
+		
 		follower.visible = true;
 		selector.visible = true;
 		sback.visible = true;
@@ -236,6 +238,7 @@ class SpriteSheetManager extends ShowSpriteSheets
 			sheetholder.removeChild(bitsheet);
 		}
 		
+		sheetholder.removeEventListener(MouseEvent.MOUSE_UP, uclick);
 		follower.visible = false;
 		selector.visible = false;
 		sback.visible = false;

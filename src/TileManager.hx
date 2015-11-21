@@ -88,11 +88,9 @@ class TileManager extends Sprite
 	private var mb:MessageChannel;
 	private var imageBytes:ByteArray;
 	
-
 	private var con_key:Dynamic;
 	private var con_Mode:String = null;
 	
-
 	public function new() :Void
 	{			
 		super();
@@ -360,8 +358,7 @@ class TileManager extends Sprite
 		}
 		
 		var spritesheettilesMade:Array<TileObject> = new Array<TileObject>();
-		
-		
+				
 		//tiledic[classname][0] = key;
 		//tiledic[classname][1] = xoffset
 		//tiledic[classname][2] = yoffset
@@ -543,9 +540,6 @@ class TileManager extends Sprite
 		*/
 	}
 	
-	
-	
-
 	private function setTileProps(e:String, rect:Object):Void{
 		var key:Int = tiledic[e].key;
 		
@@ -566,7 +560,6 @@ class TileManager extends Sprite
 		tilenum[key][5] = 1;//totalframes
 		*/
 		//
-		
 		
 		if(!tob.spr_useSheet){//if (!tiledic[e][10][0]) {
 			// does not use SpriteSheets

@@ -2,6 +2,7 @@ package ;
 
 import fl.motion.Color;
 import flash.display.Bitmap;
+import flash.display.DisplayObject;
 import flash.display.MovieClip;
 import flash.display.Sprite;
 import flash.events.Event;
@@ -57,7 +58,6 @@ class DisplayManager extends MainStageMC
 	private var anitileList:Array<Dynamic> = new Array<Dynamic>();
 	public var warpGates:Array<WarpGate> = new Array<WarpGate>();
 	
-
 	//
 	private var pressKeys:Map<Int, Bool> = new Map<Int, Bool>();
 	private var isBusy:Bool = false;	
@@ -108,10 +108,12 @@ class DisplayManager extends MainStageMC
 	private var largerthanView:Array<Dynamic> = new Array<Dynamic>();
 	private var saveBusy:Bool = false;	// prevents clicks to modify the map
 	
+	private var previouslyUsedTiles:Array<MovieClip> = new Array<MovieClip>();
+	
 	public var currentmap:String;
 	private var currentVersion:Int;
 	
-	private var visibleLayer:Array<Bool> = [true, true, true, true, true, false, true]; //[0,1,2,events, warpgates, walk, selectedtile_visibility]
+	private var visibleLayer:Array<Bool> = [true, true, true, true, true, false, true, false]; //[0,1,2,3-events, 4-warpgates, 5-walk, 6-selectedtile_visibility,7-showGrid]
 	
 	private var cineEditMode:Bool = false; // let's you freely click and pan around map
 	private var cineEditMode_Point:Point = new Point(); // for cineEditMode=TRUE - starting point for the drag
@@ -123,8 +125,14 @@ class DisplayManager extends MainStageMC
 	public var selectedTileSet:Array<String>;
 	public var authorName:String = "";
 	
+	//
 	private var ignoreList:Array<Int> = [ Omni.BUTTERFLY ];//tiles to ignore
-		
+	private var grassOptTiles:Array<Int> = [939, 963, 964];
+	
+	private var walkNodesMap:Array<Array<Array<WalkNode>>>;
+	
+	
+	//	
 	public static function getInstance():DisplayManager {
 		if (thisManager == null) {
 			thisManager = new DisplayManager();
@@ -184,202 +192,101 @@ class DisplayManager extends MainStageMC
 		// Housekeeping
 		//walk_eye.gotoAndStop(2);
 		
-				
 		gameEdgeLeft	= Std.int(groundclip.x);
 		gameEdgeRight	= Std.int(groundclip.x + GameScreenWidth);
 		
-		// Buttons 
-		eraser = new ToggleButton( new Eraser_Btt() );
+		// Buttons 		
+		eraser = toggleButtonMaker(new Eraser_Btt(), 0, null, erased, false);
 		eraser.x = 603.4;
 		eraser.y = 632.1;
-		addChild(eraser);
 		
-		var cineEditModeBtt:ToggleButton = new ToggleButton(new EditMode_Btt());
+		var cineEditModeBtt:ToggleButton = toggleButtonMaker(new EditMode_Btt(),0,null,cctv,false);
 		cineEditModeBtt.x = 691;
 		cineEditModeBtt.y = 632.1;
-		cineEditModeBtt.addEventListener(MouseEvent.CLICK, cctv);
-		addChild(cineEditModeBtt);
 		
-		visi_selectedTile_btt = new ToggleButton(s_tileVisibtt);
-		visi_selectedTile_btt.x = s_tileVisibtt.x;
-		visi_selectedTile_btt.y = s_tileVisibtt.y;
-		visi_selectedTile_btt.valueInt = 6;
-		visi_selectedTile_btt.scrubCoord();
-		visi_selectedTile_btt.addEventListener(MouseEvent.CLICK, setvisi);
-		addChild(visi_selectedTile_btt);
+		var cineEditModeBtt:ToggleButton = toggleButtonMaker(new EditMode_Btt(),0,null,cctv,false);
+		cineEditModeBtt.x = 691;
+		cineEditModeBtt.y = 632.1;
 		
-		grassoptimizer_btt.addEventListener(MouseEvent.CLICK, optimizeGrass);
-
-		save_btt_toggle = new ToggleButton(save_btt);
-		save_btt_toggle.x = save_btt.x;
-		save_btt_toggle.y = save_btt.y;
-		save_btt_toggle.scrubCoord();
-		save_btt_toggle.addEventListener(MouseEvent.CLICK, saveMap);
-		save_btt_toggle.toggle(false);
-		addChild(save_btt_toggle);
-				
 		
-		// Buttons - layer visibility
-		var visi_layer_0:ToggleButton 	= new ToggleButton(visibility_lay_0_btt);
-		var visi_layer_1:ToggleButton	= new ToggleButton(visibility_lay_1_btt);
-		var visi_layer_2:ToggleButton 	= new ToggleButton(visibility_lay_2_btt);
-		var visi_layer_e:ToggleButton 	= new ToggleButton(visibility_lay_e_btt);
-		var visi_layer_w:ToggleButton 	= new ToggleButton(visibility_lay_w_btt);
-		var visi_layer_wk:ToggleButton 	= new ToggleButton(visibility_lay_wk_btt);
-		
-		visi_layer_0.x = visibility_lay_0_btt.x;
-		visi_layer_0.y = visibility_lay_0_btt.y;
-		visi_layer_0.valueInt = 0;
-		
-		visi_layer_1.x = visibility_lay_1_btt.x;
-		visi_layer_1.y = visibility_lay_1_btt.y;
-		visi_layer_1.valueInt = 1;
-		
-		visi_layer_2.x = visibility_lay_2_btt.x;
-		visi_layer_2.y = visibility_lay_2_btt.y;
-		visi_layer_2.valueInt = 2;
-		
-		visi_layer_e.x = visibility_lay_e_btt.x;
-		visi_layer_e.y = visibility_lay_e_btt.y;
-		visi_layer_e.valueInt = 3;
-		
-		visi_layer_wk.x = visibility_lay_wk_btt.x;
-		visi_layer_wk.y = visibility_lay_wk_btt.y;
-		visi_layer_wk.valueInt = 5;
-		
-		visi_layer_w.x = visibility_lay_w_btt.x;
-		visi_layer_w.y = visibility_lay_w_btt.y;
-		visi_layer_w.valueInt = 4;
-				
-		visi_layer_0.scrubCoord();
-		visi_layer_1.scrubCoord();
-		visi_layer_2.scrubCoord();
-		visi_layer_e.scrubCoord();
-		visi_layer_wk.scrubCoord();
-		visi_layer_w.scrubCoord();
-		
-		addChild(visi_layer_0);
-		addChild(visi_layer_1);
-		addChild(visi_layer_2);
-		addChild(visi_layer_e);
-		addChild(visi_layer_wk);
-		addChild(visi_layer_w);
-		
-		visi_layer_0.toggle(visibleLayer[0]);
-		visi_layer_1.toggle(visibleLayer[1]);
-		visi_layer_2.toggle(visibleLayer[2]);
-		visi_layer_e.toggle(visibleLayer[3]);
-		visi_layer_wk.toggle(visibleLayer[5]);
-		visi_layer_w.toggle(visibleLayer[4]);
-		
-		// Buttons Layer select
-		var bttIndex_0:Int = getChildIndex(lay_0_btt);
-		var bttIndex_1:Int = getChildIndex(lay_1_btt);
-		var bttIndex_2:Int = getChildIndex(lay_2_btt);
-		var bttIndex_e:Int = getChildIndex(lay_e_btt);
-		var bttIndex_w:Int = getChildIndex(lay_w_btt);
-		
-		var bttLayer_0:ToggleButton 	= new ToggleButton(lay_0_btt);
-		var bttLayer_1:ToggleButton		= new ToggleButton(lay_1_btt);
-		var bttLayer_2:ToggleButton 	= new ToggleButton(lay_2_btt);
-		var bttLayer_e:ToggleButton 	= new ToggleButton(lay_e_btt);
-		var bttLayer_w:ToggleButton 	= new ToggleButton(lay_w_btt);
-		
-		bttLayer_0.x = lay_0_btt.x;
-		bttLayer_0.y = lay_0_btt.y;
-		bttLayer_0.valueInt = 0;
-		
-		bttLayer_1.x = lay_1_btt.x;
-		bttLayer_1.y = lay_1_btt.y;
-		bttLayer_1.valueInt = 1;
-		
-		bttLayer_2.x = lay_2_btt.x;
-		bttLayer_2.y = lay_2_btt.y;
-		bttLayer_2.valueInt = 2;
-		
-		bttLayer_e.x = lay_e_btt.x;
-		bttLayer_e.y = lay_e_btt.y;
-		bttLayer_e.valueInt = 3;
-		
-		bttLayer_w.x = lay_w_btt.x;
-		bttLayer_w.y = lay_w_btt.y;
-		bttLayer_w.valueInt = 4;
-		
-		bttLayer_0.scrubCoord();
-		bttLayer_1.scrubCoord();
-		bttLayer_2.scrubCoord();
-		bttLayer_e.scrubCoord();
-		bttLayer_w.scrubCoord();
-		
-		addChild(bttLayer_0);
-		addChild(bttLayer_1);
-		addChild(bttLayer_2);
-		addChild(bttLayer_e);
-		addChild(bttLayer_w);
-		
-		setChildIndex(bttLayer_0, bttIndex_0);
-		setChildIndex(bttLayer_1, bttIndex_1);
-		setChildIndex(bttLayer_2, bttIndex_2);
-		setChildIndex(bttLayer_e, bttIndex_e);
-		setChildIndex(bttLayer_w, bttIndex_w);
+		visi_selectedTile_btt 	= toggleButtonMaker(s_tileVisibtt, 6, null, setvisi, true); 		
+		save_btt_toggle 		= toggleButtonMaker(save_btt, 0, null, saveMap, false);
+		//-----------------------
+		// Toggle replace Buttons
+		toggleButtonMaker(visibility_lay_0_btt, 0, null, setvisi, visibleLayer[0]);
+		toggleButtonMaker(visibility_lay_1_btt, 1, null, setvisi, visibleLayer[1]);
+		toggleButtonMaker(visibility_lay_2_btt, 2, null, setvisi, visibleLayer[2]);
+		toggleButtonMaker(visibility_lay_e_btt, 3, null, setvisi, visibleLayer[3]);
+		toggleButtonMaker(visibility_lay_w_btt, 4, null, setvisi, visibleLayer[4]);
+		toggleButtonMaker(visibility_lay_wk_btt, 5, null, showWalkableTiles, visibleLayer[5]);
+		toggleButtonMaker(showgrid_btt, 		7, null, setvisi, visibleLayer[5]);// show Grid Button
 		
 		var tg:Array<ToggleButton> = new Array<ToggleButton>();
-		tg.push(bttLayer_0);
-		tg.push(bttLayer_1);
-		tg.push(bttLayer_2);
-		tg.push(bttLayer_e);
-		tg.push(bttLayer_w);
+		toggleButtonMaker(lay_0_btt, 0, tg, setlayer, false);
+		toggleButtonMaker(lay_1_btt, 1, tg, setlayer, false);
+		toggleButtonMaker(lay_2_btt, 2, tg, setlayer, false);
+		toggleButtonMaker(lay_e_btt, 3, tg, setlayer, false);
+		toggleButtonMaker(lay_w_btt, 4, tg, setlayer, false);
 		
-		bttLayer_0.setToggleGroup(tg);
-		bttLayer_1.setToggleGroup(tg);
-		bttLayer_2.setToggleGroup(tg);
-		bttLayer_e.setToggleGroup(tg);
-		bttLayer_w.setToggleGroup(tg);
+		tg[0].toggle(true);
+		//-----------------------
 		
-		bttLayer_0.toggle(true);
-
 		// Button Functions
-		stage.addEventListener(MouseEvent.MOUSE_DOWN, startplacetile);
-		stage.addEventListener(MouseEvent.MOUSE_UP, stopplacetile);
-		stage.addEventListener(MouseEvent.MOUSE_MOVE, ghosttile);
+		stage.addEventListener(MouseEvent.MOUSE_DOWN, 	startplacetile);
+		stage.addEventListener(MouseEvent.MOUSE_UP, 	stopplacetile);
+		stage.addEventListener(MouseEvent.MOUSE_MOVE, 	ghosttile);
+		stage.addEventListener(MouseEvent.MOUSE_WHEEL, 	mouseCamScrollWheel);
+		stage.addEventListener(Event.ENTER_FRAME, 		mouseCamScroll);
 		
-		stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseCamScrollWheel);
-		stage.addEventListener(Event.ENTER_FRAME, mouseCamScroll);
-		
-		eraser.addEventListener(MouseEvent.CLICK, erased);
-		
-		visi_layer_0.addEventListener(MouseEvent.CLICK, setvisi);
-		visi_layer_1.addEventListener(MouseEvent.CLICK, setvisi);
-		visi_layer_2.addEventListener(MouseEvent.CLICK, setvisi);
-		visi_layer_e.addEventListener(MouseEvent.CLICK, setvisi);
-		visi_layer_wk.addEventListener(MouseEvent.CLICK, setvisi);
-		visi_layer_w.addEventListener(MouseEvent.CLICK, setvisi);
-		
-		bttLayer_0.addEventListener(MouseEvent.CLICK, setlayer);
-		bttLayer_1.addEventListener(MouseEvent.CLICK, setlayer);
-		bttLayer_2.addEventListener(MouseEvent.CLICK, setlayer);
-		bttLayer_e.addEventListener(MouseEvent.CLICK, setlayer);
-		bttLayer_w.addEventListener(MouseEvent.CLICK, setlayer);
+		stage.addEventListener(MouseEvent.MOUSE_DOWN,	mDown);
+		stage.addEventListener(MouseEvent.MOUSE_MOVE,	mMove);
+		stage.addEventListener(MouseEvent.MOUSE_UP,		mUp);
+		stage.addEventListener(KeyboardEvent.KEY_DOWN,	keyscan);
+		stage.addEventListener(KeyboardEvent.KEY_UP,	stopkeyscan);
 		
 		newmap_btt.buttonMode = true;
-		newmap_btt.addEventListener(MouseEvent.CLICK, showNewPanel);
-		sheets_btt.addEventListener(MouseEvent.CLICK, showSheets);
+		newmap_btt.addEventListener(MouseEvent.CLICK, 	showNewPanel);
+		sheets_btt.addEventListener(MouseEvent.CLICK, 	showSheets);
 		
-		outputbtt.addEventListener(MouseEvent.CLICK, saveMapManager.outputmap);
-		inputbtt.addEventListener(MouseEvent.CLICK,showinput);
-		loadmap_btt.addEventListener(MouseEvent.CLICK, showmaplist);
+		outputbtt.addEventListener(MouseEvent.CLICK, 	saveMapManager.outputmap);
+		inputbtt.addEventListener(MouseEvent.CLICK,		showinput);
+		loadmap_btt.addEventListener(MouseEvent.CLICK, 	showmaplist);
 		mapsettings_btt.addEventListener(MouseEvent.CLICK, shwmenu);
 		
-		stage.addEventListener(KeyboardEvent.KEY_DOWN,keyscan);
-		stage.addEventListener(KeyboardEvent.KEY_UP,stopkeyscan);
+		grassoptimizer_btt.addEventListener(MouseEvent.CLICK, optimizeGrass);
 		
-		stage.addEventListener(MouseEvent.MOUSE_DOWN,mDown);
-		stage.addEventListener(MouseEvent.MOUSE_MOVE,mMove);
-		stage.addEventListener(MouseEvent.MOUSE_UP,mUp);
-				
+		//
 		rebuildmap(rows,columns,"newmap_"+Math.round(Math.random()* 99));
 		setghosttile();
 		//
+	}
+	
+	private function toggleButtonMaker(replaceClip:MovieClip, valueInt:Int, toggleGroup:Array<ToggleButton>, func:Dynamic, defaultState:Bool):ToggleButton {
+		var setDepth:Int = -1;
+		if (this.contains(replaceClip)) {
+			setDepth = this.getChildIndex(replaceClip);
+		}		
+		
+		var btt:ToggleButton = new ToggleButton(replaceClip);
+		btt.x = replaceClip.x;
+		btt.y = replaceClip.y;
+		btt.valueInt = valueInt;
+		btt.addEventListener(MouseEvent.CLICK, func);
+		btt.scrubCoord();
+		btt.toggle(defaultState);
+		
+		addChild(btt);
+		
+		if (setDepth>-1) {
+			setChildIndex(btt, setDepth);
+		}
+		
+		if (toggleGroup != null) {
+			toggleGroup.push(btt);
+			btt.setToggleGroup(toggleGroup);
+		}
+		
+		return btt;
 	}
 	
 	public function newmap(rownum:Int, columnnum:Int, newmapname:String):Void {
@@ -523,6 +430,7 @@ class DisplayManager extends MainStageMC
 					w.y = Std.parseInt(gates[1]);
 					w.toTownName = gates[2];// [2] is a string - town name
 					w.warpLocations = new Array<Point>();
+					w.warpInt = s;
 					/*
 					warpGates[s][0] = Std.parseInt(gates[0]);
 					warpGates[s][1] = Std.parseInt(gates[1]);
@@ -650,7 +558,116 @@ class DisplayManager extends MainStageMC
 		
 		mc.toggle(visibleLayer[num]);
 		resetBitmap();
+	}
+	private function showWalkableTiles(e:MouseEvent):Void {
+		var mc:ToggleButton = cast(e.currentTarget, ToggleButton);
+		var num:Int = mc.valueInt;
+		visibleLayer[num] = !visibleLayer[num];
 		
+		generateWalkNodes();
+		mc.toggle(visibleLayer[num]);
+		resetBitmap();
+	}
+	private function generateWalkNodes():Void {
+		walkNodesMap = new Array<Array<Array<WalkNode>>>();
+		for (z in 0...rows+1) {
+			walkNodesMap.push(new Array<Array<WalkNode>>());
+			walkNodesMap.push(new Array<Array<WalkNode>>());
+			walkNodesMap.push(new Array<Array<WalkNode>>());
+			for (q in 0...columns+1) {
+				walkNodesMap[z*3].push(new Array<WalkNode>());
+				walkNodesMap[z*3].push(new Array<WalkNode>());
+				walkNodesMap[z*3].push(new Array<WalkNode>());		
+				
+				walkNodesMap[(z*3)+1].push(new Array<WalkNode>());
+				walkNodesMap[(z*3)+1].push(new Array<WalkNode>());
+				walkNodesMap[(z*3)+1].push(new Array<WalkNode>());		
+				
+				walkNodesMap[(z*3)+2].push(new Array<WalkNode>());
+				walkNodesMap[(z*3)+2].push(new Array<WalkNode>());
+				walkNodesMap[(z*3)+2].push(new Array<WalkNode>());
+			}
+		}
+		//
+		for (z in 0...rows) {
+			for (q in 0...columns) {
+				switch(map[z][q][0]) {//  [939, 963, 964];
+					case 939: // normal grass
+						walkNodesAddWalkForm(z, q - 1, 0, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q + 1, 0, [1, 1, 1,  1, 1, 0,  1, 0, 0]);
+					case 963: // lifted grass platform
+						walkNodesAddWalkForm(z, q - 1, 1, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q,1, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q + 1,1, [1, 1, 1,  1, 1, 0,  1, 0, 0]);	
+					case 964: // lowered grass platform
+						walkNodesAddWalkForm(z, q - 1,2, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q, 2, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
+						walkNodesAddWalkForm(z, q + 1, 2, [1,1,1,  1,1,0,  1,0,0]);	
+				}
+				
+			}
+		}
+		//
+	}
+	private function walkNodesAddWalkForm(rowx:Int, colx:Int, glevel:Int, arr:Array<Int>):Void {
+		if (map[rowx] == null) {
+			return;
+		}
+		if (map[rowx][colx] == null) {
+			return;
+		}
+		
+		var sy:Float = rowx * tileHeight + 7.5;
+		var sx:Float = colx * tileWidth + 7.5;
+		var gap:Float = 50 / 3;
+		for (i in 0...3) {
+			for (j in 0...3) {
+				if (arr[((i) * 3) + j] == 1) {
+					
+					var depthArr:Array<Int> = [0, -24, 24];
+					// can walk here
+					var wnode:WalkNode = new WalkNode();
+					wnode.x = sx + (16.6) * j;
+					wnode.y = sy + (16.6) * i;
+					wnode.depth = depthArr[glevel];
+					wnode.level = glevel;
+					
+					var nx:Int = cast(Math.floor(wnode.x/ gap), Int);
+					var ny:Int = cast(Math.floor(wnode.y / gap), Int);
+					
+					// if there already is a walkNode on the same glevel as this one, then don't add another - prevent duplicates
+					var addToNodes:Bool = true;
+					for (w in walkNodesMap[ny][nx]) {
+						if (w.level == glevel) {
+							addToNodes = false;
+							break;
+						}
+					}
+					
+					if (addToNodes) {
+						if (walkNodesMap[ny-1] != null) {
+							for (w in walkNodesMap[ny-1][nx]) {
+								if (w.level == glevel) {
+									wnode.addNeighbour(w);
+									w.addNeighbour(wnode);
+								}
+							}
+						}
+						if (walkNodesMap[ny][nx - 1] != null) {
+							for (w in walkNodesMap[ny][nx-1]) {
+								if (w.level == glevel) {
+									wnode.addNeighbour(w);
+									w.addNeighbour(wnode);
+								}
+							}
+						}
+						walkNodesMap[ny][nx].push(wnode);						
+					}					
+				}
+				
+			}
+		}
 	}
 	private function erased(e:MouseEvent):Void{
 		eraseBrush = true;
@@ -799,7 +816,8 @@ class DisplayManager extends MainStageMC
 			
 			for(t in 0...s.warpLocations.length){
 				if( s.warpLocations[t].x == ex && ey == s.warpLocations[t].y){
-					s.warpLocations.splice(t,1);
+					s.warpLocations.splice(t, 1);
+					break;
 				}
 			}
 		}
@@ -1023,19 +1041,64 @@ class DisplayManager extends MainStageMC
 			tileList1= tileList1.concat(tileList4Return[0]);
 		}
 		
+		//
+		drawAll(tileList1);
 		
+		//
+		skyclip.graphics.clear();
 		if (visibleLayer[5]) {
-			// Walkable Layer - Sets where 
-			var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
-			tileList1= tileList1.concat(tileList5);
+			// Walkable Layer 
+			
+			//var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
+			//tileList1= tileList1.concat(tileList5);
+			var camx:Float = cam_point.x;
+			var camy:Float = cam_point.y;
+			
+			
+			
+			var gridCol:Array<UInt> = [0xfff000, 0xff0000, 0x00ff00];
+			for (z in (yst*3)...((yend+1)*3)) {
+				for (q in (colstart * 3)...((colend + 1) * 3)) {
+					
+					for (w in walkNodesMap[z][q]) {
+						for (edge in w.neighbours) {
+							skyclip.graphics.lineStyle(.5, gridCol[w.level]);
+							
+							skyclip.graphics.moveTo((w.x-camx), ((w.y+w.depth)-camy) );
+							skyclip.graphics.lineTo((edge.x-camx), ((edge.y+edge.depth)-camy));
+						}
+						
+					}
+					
+				}
+			}
+			
+			
+			
 		}
 		
-		drawAll(tileList1);
+		
+		if (visibleLayer[7]) {
+			// show grid-------------
+			skyclip.graphics.lineStyle(1, 0xff0000);
+			var camx:Int = cast(cam_point.x % TileManager.tileWidth, Int);
+			var camy:Int = cast(cam_point.y % TileManager.tileHeight, Int);
+			
+			for (iy in 0...rows) {
+				skyclip.graphics.moveTo(0-camx, iy*TileManager.tileHeight-camy);
+				skyclip.graphics.lineTo(GameScreenWidth-camx, iy * TileManager.tileHeight-camy);
+			}
+			for (ix in 0...columns) {
+				skyclip.graphics.moveTo(ix*TileManager.tileWidth -camx, 0-camy);
+				skyclip.graphics.lineTo(ix*TileManager.tileWidth -camx, GameScreenHeight-camy);
+			}
+			
+		}
 
 		//
 		if (visibleLayer[4]) {
 			// Show warpgates
-			for (s in warpGates) { //for (var s in warpGates) {
+			for (s in warpGates) { 
 				for (t in s.warpLocations) { //for (var t in warpGates[s][3]) {
 					var z:Int = Std.int(t.y); // warpGates[s][3][t][1];
 					var q:Int = Std.int(t.x); // warpGates[s][3][t][0];
@@ -1043,7 +1106,6 @@ class DisplayManager extends MainStageMC
 					//var dtile:Class = getDefinitionByName("tl_wg_" + s)  as Class;
 					//var key:Int = tiledic[dtile][0];
 					var key:Int = tileManager.tiledic.get("tl_wg_" + s.warpInt).key;
-					
 					var dx:Float = (q * tileWidth)- cam_point.x + tileWidth;
 					var dy:Float = (z * tileHeight)- cam_point.y + tileHeight;
 					var pt:Point = new Point(dx, dy);
@@ -1550,8 +1612,16 @@ class DisplayManager extends MainStageMC
 		visi_selectedTile_btt.toggle(true);
 	}
 	
-	public function updateSelectedTileInfo():Void {		
-		if(selectedtile != 0 && !eraseBrush){
+	public function updateSelectedTileInfo(addToPrev:Bool = true ):Void {		
+				
+		if (selectedtile != 0 && !eraseBrush) {
+			
+			// Add to previously selected list
+			if (this.s_tilenumtxt.text != selectedtile+"" && addToPrev) {
+				previouslyUsed();
+			}			
+			//
+			
 			this.s_tilenumtxt.text = selectedtile + "";
 			this.s_walktypetxt.text = tilenum[selectedtile].walkType + "";
 			
@@ -1566,11 +1636,54 @@ class DisplayManager extends MainStageMC
 			selected_bit.y = 690;
 			selected_bit.width = tileWidth;
 			selected_bit.height = tileHeight;
-			addChild(selected_bit);		
+			addChild(selected_bit);
+			
+			
+			
 		}else {
 			this.s_tilenumtxt.text = "-";
 			this.s_walktypetxt.text = "-";
 		}
+	}
+	public function previouslyUsed():Void {
+		var bit:BitmapData = tilebitdata[selectedtile];
+		var ss:Bitmap = new Bitmap(bit);
+		var sbit:MovieClip = new MovieClip();
+		sbit.addChild(ss);		
+		sbit.width = tileWidth;
+		sbit.height = tileHeight;
+		sbit.tilenumber = selectedtile;
+		sbit.addEventListener(MouseEvent.CLICK, select_tile);
+		
+		previouslyUsedTiles.push(sbit);
+		refreshPreviouslyUsedTiles();
+	}
+	private function select_tile(e:MouseEvent):Void {
+		var mc:MovieClip = cast(e.currentTarget, MovieClip);
+		notEraseBrush();
+		
+		selected_Array = [[mc.tilenumber]];
+		selectedtile = selected_Array[0][0];
+		
+		setghosttile();
+		updateSelectedTileInfo(false);
+	}
+	private function refreshPreviouslyUsedTiles():Void {
+		var i:Int = 0;
+		
+		if (previouslyUsedTiles.length > 80) {
+			previouslyUsedTiles.shift();
+		}
+		
+		for (rev in (-(previouslyUsedTiles.length - 1))...1) {			
+			var ibit:Sprite = previouslyUsedTiles[rev*-1];
+			ibit.x = ((i * 60) % GameScreenWidth) + gameEdgeLeft + 10; 
+			ibit.y = Math.floor((i * 60) / GameScreenWidth) * 60 + GameScreenHeight+160;
+			addChild(ibit);
+			
+			i++;
+		}
+		
 	}
 
 	private function cctv(e:MouseEvent):Void{
@@ -1603,8 +1716,23 @@ class DisplayManager extends MainStageMC
 		
 	}
 	private function optimizeGrass(e:MouseEvent):Void {
-		
+		for (rowx in 0...map.length) {
+			for (colx in 1...map[rowx].length) {
+				var ele:Array<Int> = map[rowx][colx];//[0,0,0,0]
+				if (grassOptTiles.indexOf(ele[0]) > -1) {
+					var pastEle:Array<Int> = map[rowx][colx-1];
+					if (grassOptTiles.indexOf(pastEle[0]) > -1) {
+						// large grass tile next to each other therefore must remove
+						map[rowx][colx][0] = 0;
+					}
+				}
+				
+			}
+		}
+		resetBitmap();
+		save_btt_toggle.toggle(true); // map has been changed, activate save button
 	}
+		
 	private function saveMap(e:MouseEvent):Void {
 		currentVersion++;
 		saveMapManager.saveMap(authorName, currentmap, currentVersion, outputSTR());
