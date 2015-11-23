@@ -528,16 +528,6 @@ class TileManager extends Sprite
 		bm.send("stop_spriteSheetSprites");
 		//--------
 		
-		/*
-		*tiledic
-		*tilenum
-		*tilebitdata
-		
-		*spriteSheets
-	
-		*partofSheet
-		*looseTiles
-		*/
 	}
 	
 	private function setTileProps(e:String, rect:Object):Void{
