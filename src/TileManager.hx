@@ -334,7 +334,7 @@ class TileManager extends Sprite
 			var t:TileObject = new TileObject();
 			//tiledic[i] = tileDicArr[i];
 			tiledic[i] = t;
-			
+				
 			t.key 					= tileDicArr[i][0];
 			t.xoffset 				= tileDicArr[i][1];
 			t.yoffset				= tileDicArr[i][2];
@@ -342,13 +342,22 @@ class TileManager extends Sprite
 			
 			t.setAnimationData(tileDicArr[i][4][0], tileDicArr[i][4][1], tileDicArr[i][4][2], tileDicArr[i][4][3]);
 			t.totalFrames			= tileDicArr[i][5];
-			t.walkType				= tileDicArr[i][6];
+	
 			t.extendsStandardTile	= tileDicArr[i][7];
 			t.width					= tileDicArr[i][8];
 			t.height				= tileDicArr[i][9];
 			
 			t.depthPoint			= tileDicArr[i][11];	
 			t.className 			= i;
+			
+			t.isWalkable			= tileDicArr[i][12][0];
+			if (t.isWalkable) {				
+				t.isSpecialWalkType		= tileDicArr[i][12][1];
+				t.walkGLevel			= tileDicArr[i][12][2];
+				t.walkNode_L			= tileDicArr[i][12][3];
+				t.walkNode_M			= tileDicArr[i][12][4];
+				t.walkNode_R			= tileDicArr[i][12][5];			
+			}		
 		
 			
 			t.setSpriteSheet(tileDicArr[i][10][0], new Point(), new Point(), "", false);
@@ -365,7 +374,7 @@ class TileManager extends Sprite
 		//tiledic[classname][3] = sendtoGround
 		//tiledic[classname][4] = [animation,true:NOTLOOP false:isLoop,AfterAnmationTile,syncTile]
 		//tiledic[classname][5] = totalframes
-		//tiledic[classname][6] = WalkType=0/None
+		//tiledic[classname][6] = FREE TO REPLACE
 		//tiledic[classname][7] = extends standardtile
 		//tiledic[classname][8] = width
 		//tiledic[classname][9] = height
@@ -375,7 +384,7 @@ class TileManager extends Sprite
 		//tiledic[classname][10][3] = SpriteSheetCLASS
 		//tiledic[classname][10][4] = needtomakeTileDIC?
 		//tiledic[classname][11] = depthpoint:int=0;
-		//tiledic[classname][12] = classinstanceName
+		//tiledic[classname][12] = [iswalkable, isspecialwalk,glevel, [L],[M],[R]  ]
 		
 		for (tileRow in tiledic) {//used to be et
 			if (tileRow.spr_useSheet) { //if (tileRow[10][0]) {
@@ -412,7 +421,6 @@ class TileManager extends Sprite
 								_walktype = spriteSheetWalkables[num];
 							}
 							
-							//tiledic["SpriteSheet" + num] = [num, 0, 0, sendtoBack, [false, false], 0, _walktype, false, 0, 0, [true, [clms, rrs], [clms, rrs], et, true], depthadd];
 							var t:TileObject = new TileObject();
 							t.key = num;
 							t.xoffset = 0;
@@ -420,17 +428,16 @@ class TileManager extends Sprite
 							t.sendToGround = sendtoBack;
 							t.setAnimationData(false, false, 0,0);
 							t.totalFrames = 0;
-							t.walkType = _walktype;
+							t.isWalkable = tileRow.isWalkable;
+							t.isSpecialWalkType = false;
 							t.extendsStandardTile = false;
 							t.width = 0;
 							t.height = 0;
 							t.setSpriteSheet(true,new Point(clms, rrs), new Point(clms, rrs), tileRow.className, true);
 							t.depthPoint = depthadd;
 							t.className = "SpriteSheet" + num;
-							//tiledic["SpriteSheet" + num] = t;
 							
 							partofSheet.push(num);
-							//spritesheettilesMade.push(["SpriteSheet" + num, [num, 0, 0, sendtoBack, [false, false], 0, _walktype, false, 0, 0, [true, [clms, rrs], [clms, rrs], className, true], depthadd] ]);
 							spritesheettilesMade.push(t);
 							num++;
 						}
@@ -535,21 +542,7 @@ class TileManager extends Sprite
 		
 		tilenum[key] = tiledic[e];
 		var tob:TileObject = tilenum[key];
-		
-		//tob.key = key;
-		//tob.className = e;
-		//tob.sendToGround = tiledic[e][3];
-		//tob.setAnimationData(tiledic[e][4][0], tiledic[e][4][1], tiledic[e][4][2], tiledic[e][4][2]);
 		tob.totalFrames = 1;		
-		/*tilenum[key][0] = e;
-		tilenum[key][3] = tiledic[e][3];//sendtoGround
-		tilenum[key][4] = new Array<Dynamic>();
-		tilenum[key][4][0] = tiledic[e][4][0];//Animation
-		tilenum[key][4][1] = tiledic[e][4][1];//nonLoop
-		tilenum[key][4][2] = tiledic[e][4][2];//nonLoop
-		tilenum[key][5] = 1;//totalframes
-		*/
-		//
 		
 		if(!tob.spr_useSheet){//if (!tiledic[e][10][0]) {
 			// does not use SpriteSheets
@@ -560,21 +553,17 @@ class TileManager extends Sprite
 			
 			tob.xoffset = ti.x - rect.x;
 			tob.yoffset = ti.y-rect.y;
-			//tilenum[key][1] = ti.x-rect.x;//xoffset
-			//tilenum[key][2] = ti.y-rect.y;//yoffset
 			
 			tilebitdata[key] = new BitmapData(ti.width,ti.height,true,0x000000);
 			var mtx:Matrix = new Matrix();
-			//mtx.tx = tilenum[key][1];
-			//mtx.ty = tilenum[key][2];
+	
 			mtx.tx = tob.xoffset;
 			mtx.ty = tob.yoffset;
 			tilebitdata[key].draw(cast(ti, MovieClip), mtx);
 			
 			//totalFrames
-			if(tob.ani_hasAnimation){//if (tiledic[e][4][0]) {
-				tob.totalFrames = ti.totalFrames; //tiledic[e][5] = ti.totalFrames;
-				//tilenum[key][5] = ti.totalFrames;
+			if(tob.ani_hasAnimation){
+				tob.totalFrames = ti.totalFrames; 
 				for (o in 1...ti.totalFrames) {
 					ti.gotoAndStop(o);
 					
@@ -585,41 +574,26 @@ class TileManager extends Sprite
 				}
 			}
 			
-			//tiledic[e][8] = ti.width;
-			//tiledic[e][9] = ti.height;
 			tob.width = ti.width;
 			tob.height = ti.height;
 		}else{
 			//DOES use spriteSheet
-			var cl = Type.resolveClass(tob.spr_SheetClass); //var cl = Type.resolveClass(tiledic[e][10][3]);
+			var cl = Type.resolveClass(tob.spr_SheetClass);
 			var tie = Type.createEmptyInstance(cl);
 			
 			tob.xoffset = 0;
 			tob.yoffset = 0;
-			//tilenum[key][1] = 0;
-			//tilenum[key][2] = 0;
-			
-			//var wid:Int = ((tiledic[e][10][2][0]-tiledic[e][10][1][0])+1)* tileWidth;
-			//var hei:Int = ((tiledic[e][10][2][1]-tiledic[e][10][1][1])+1)* tileHeight;
+
 			var wid:Int = Std.int(((tob.spr_endCOORD.x - tob.spr_startCOORD.x)+1)* tileWidth);
 			var hei:Int = Std.int(((tob.spr_endCOORD.y - tob.spr_startCOORD.y)+1)* tileHeight);
 			
 			tilebitdata[key] = new BitmapData(wid,hei,true,0x000000);
 			var mtxe:Matrix = new Matrix();
-			//mtxe.tx = -tiledic[e][10][1][0]* tileWidth;
-			//mtxe.ty = -tiledic[e][10][1][1]* tileHeight;
+	
 			mtxe.tx = -tob.spr_startCOORD.x * tileWidth;
 			mtxe.ty = -tob.spr_startCOORD.y * tileHeight;
 			tilebitdata[key].draw(tie,mtxe);	
-		}
-		
-		/*
-		tilenum[key][6] = tiledic[e][6];//walkType
-		tilenum[key][7] = tiledic[e][7];//Extends standardTile
-		tilenum[key][8] = tiledic[e][8];//width
-		tilenum[key][9] = tiledic[e][9];//height
-		tilenum[key][10] = tiledic[e][11];//depthpoint:Int
-		*/
+		}		
 	}	
 	
 	public function newWarpTile(i:Int):Void {
@@ -638,7 +612,7 @@ class TileManager extends Sprite
 			t.sendToGround			= false;
 			t.setAnimationData(false, false, 0, 0);
 			t.totalFrames			= 0;
-			t.walkType				= 0;
+			t.isSpecialWalkType		= false;
 			t.extendsStandardTile	= false;
 			t.width					= 0;
 			t.height				= 0;

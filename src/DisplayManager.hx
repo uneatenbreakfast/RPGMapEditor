@@ -588,29 +588,32 @@ class DisplayManager extends MainStageMC
 				walkNodesMap[(z*3)+2].push(new Array<WalkNode>());
 			}
 		}
-		//
+		// base layer
 		for (z in 0...rows) {
 			for (q in 0...columns) {
-				switch(map[z][q][0]) {//  [939, 963, 964];
-					case 939: // normal grass
-						walkNodesAddWalkForm(z, q - 1, 0, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q + 1, 0, [1, 1, 1,  1, 1, 0,  1, 0, 0]);
-					case 963: // lifted grass platform
-						walkNodesAddWalkForm(z, q - 1, 1, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q,1, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q + 1,1, [1, 1, 1,  1, 1, 0,  1, 0, 0]);	
-					case 964: // lowered grass platform
-						walkNodesAddWalkForm(z, q - 1,2, [0, 0, 1,  0, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q, 2, [1, 1, 1,  1, 1, 1,  1, 1, 1]);
-						walkNodesAddWalkForm(z, q + 1, 2, [1,1,1,  1,1,0,  1,0,0]);	
+				var tob:TileObject = tilenum.get(map[z][q][0]);
+				
+				if (tob == null) { 
+					continue;
 				}
 				
+				if (tob.isWalkable) {
+					if (tob.isSpecialWalkType) {
+						walkNodesAddWalkForm(z, q - 1, 	tob.walkGLevel, tob.walkNode_L, tob.depthPoint);
+						walkNodesAddWalkForm(z, q, 		tob.walkGLevel, tob.walkNode_M, tob.depthPoint);
+						walkNodesAddWalkForm(z, q + 1, 	tob.walkGLevel, tob.walkNode_R, tob.depthPoint);
+					}else {
+						walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1], 0);
+					}
+				}				
 			}
 		}
 		//
 	}
-	private function walkNodesAddWalkForm(rowx:Int, colx:Int, glevel:Int, arr:Array<Int>):Void {
+	private function walkNodesAddWalkForm(rowx:Int, colx:Int, glevel:Int, arr:Array<Int>, addDepth:Float):Void {
+		if (arr == null) {
+			return;
+		}
 		if (map[rowx] == null) {
 			return;
 		}
@@ -624,13 +627,12 @@ class DisplayManager extends MainStageMC
 		for (i in 0...3) {
 			for (j in 0...3) {
 				if (arr[((i) * 3) + j] == 1) {
-					
-					var depthArr:Array<Int> = [0, -24, 24];
+
 					// can walk here
 					var wnode:WalkNode = new WalkNode();
 					wnode.x = sx + (16.6) * j;
 					wnode.y = sy + (16.6) * i;
-					wnode.depth = depthArr[glevel];
+					wnode.depth = Std.int(addDepth);
 					wnode.level = glevel;
 					
 					var nx:Int = cast(Math.floor(wnode.x/ gap), Int);
@@ -860,11 +862,11 @@ class DisplayManager extends MainStageMC
 			if(map[dy] != null && map[dy][dx]!=null){
 				if( map[dy][dx][0] != 0){
 					//ww = tilenum[ map[dy][dx][0] ][6];
-					ww = tilenum[ map[dy][dx][0] ].walkType;
+					//ww = tilenum[ map[dy][dx][0] ].walkType;
 				}
 			}
 			
-			tile_0.text = map[dy][dx][0]+" w:"+ww;
+			tile_0.text = map[dy][dx][0]+"";
 			tile_1.text = map[dy][dx][1]+"";
 			tile_2.text = map[dy][dx][2]+"";
 			tile_3.text = map[dy][dx][3]+"";
@@ -1048,14 +1050,10 @@ class DisplayManager extends MainStageMC
 		skyclip.graphics.clear();
 		if (visibleLayer[5]) {
 			// Walkable Layer 
-			
-			//var tileList5:Array<DrawObject> = listWalkable(yst,yend,colstart,colend);
-			//tileList1= tileList1.concat(tileList5);
+
 			var camx:Float = cam_point.x;
 			var camy:Float = cam_point.y;
-			
-			
-			
+
 			var gridCol:Array<UInt> = [0xfff000, 0xff0000, 0x00ff00];
 			for (z in (yst*3)...((yend+1)*3)) {
 				for (q in (colstart * 3)...((colend + 1) * 3)) {
@@ -1228,62 +1226,6 @@ class DisplayManager extends MainStageMC
 		} else {
 			whichBuffer.copyPixels(tilebitdata[key], rec, pt,null,null,true);
 		}
-	}
-
-
-	private function listWalkable(yst:Int,yend:Int,colstart:Int,colend:Int):Array<DrawObject> {
-		var dlist:Array<DrawObject> = new Array<DrawObject>();
-		var sendtobot:Array<DrawObject> = new Array<DrawObject>();
-		var ob:DrawObject;
-		var numKey:Int;
-		var key:Int;
-		var xoffset:Int;
-		var yoffset:Int;
-		var pPoint:Point = new Point();
-		var rRect:Rectangle = new Rectangle(0,0,0,0);
-		
-		var campointx:Int = Std.int(cam_point.x);
-		var campointy:Int = Std.int(cam_point.y);
-		
-		for (z in yst...(yend+1)) {
-			if (z>=0) {
-				for (q in colstart...(colend+1)) {//for (var q:Int = colstart; q<=colend; q++) {
-					if (q>=0) {
-						key = map[z][q][0];
-						if(key == 0){
-							continue;
-						}
-						
-						var tob:TileObject = tilenum[key];
-						
-						if (tob.walkType  == 1) { // walkable tile
-							//q -> xoffset
-							//z -> yoffset
-							
-							key = 599; // walkable tile image
-
-							xoffset = (q * tileWidth)-campointx+tileWidth;
-							yoffset = (z * tileHeight)-campointy+tileHeight;
-
-							ob = new DrawObject();
-							ob.x = (q * tileWidth);
-							ob.y = (z * tileHeight) + 0 + tob.depthPoint; //tilenum[key][10];
-
-							numKey = (z * columns) + q;
-							
-							ob.bitmapData = tilebitdata[key];
-							ob.width = tilebitdata[key].width;
-							ob.height = tilebitdata[key].height;
-							
-							ob.xoff = xoffset - (tob.xoffset);//tilenum[key][1]);
-							ob.yoff = yoffset - (tob.yoffset);//tilenum[key][2]);
-							dlist.push(ob);
-						}
-					}
-				}
-			}
-		}
-		return dlist;
 	}
 
 	private function listLoop(layer:Int,runonce:Bool,yst:Int,yend:Int,colstart:Int,colend:Int):Array<Array<DrawObject>> {
@@ -1623,7 +1565,7 @@ class DisplayManager extends MainStageMC
 			//
 			
 			this.s_tilenumtxt.text = selectedtile + "";
-			this.s_walktypetxt.text = tilenum[selectedtile].walkType + "";
+			//this.s_walktypetxt.text = tilenum[selectedtile].walkType + "";
 			
 			if (selected_bit != null) {
 				removeChild(selected_bit);
@@ -1642,7 +1584,7 @@ class DisplayManager extends MainStageMC
 			
 		}else {
 			this.s_tilenumtxt.text = "-";
-			this.s_walktypetxt.text = "-";
+			//this.s_walktypetxt.text = "-";
 		}
 	}
 	public function previouslyUsed():Void {

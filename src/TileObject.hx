@@ -19,7 +19,7 @@ class TileObject
 	public var ani_syncTile:Int;
 	
 	public var totalFrames:Int;				//tiledic[classname][5] = totalframes;
-	public var walkType:Int;				//tiledic[classname][6] = WalkType=0/None
+
 	public var extendsStandardTile:Bool;	//tiledic[classname][7] = extends standardtile
 	public var width:Float;					//tiledic[classname][8] = width
 	public var height:Float;				//tiledic[classname][9] = height
@@ -32,7 +32,16 @@ class TileObject
 	public var spr_needToMakeTileDic:Bool;
 	
 	public var depthPoint:Float;			//tiledic[classname][11] = depthpoint:int=0;
-	public var className:String;			//tiledic[classname][12] = classinstanceName
+	public var className:String;	
+	
+	public var isWalkable:Bool;				//tiledic[classname][12][0] 
+	public var isSpecialWalkType:Bool;		//tiledic[classname][12][1] 
+	public var walkGLevel:Int;				//tiledic[classname][12][2] = WalkType=0/None
+	public var walkNode_L:Array<Int>;		//tiledic[classname][12][3]
+	public var walkNode_M:Array<Int>;		//tiledic[classname][12][4]
+	public var walkNode_R:Array<Int>;		//tiledic[classname][12][5]
+	
+	
 	
 	public function new() 
 	{
@@ -78,7 +87,13 @@ class TileObject
 		t.ani_syncTile = ob.ani_syncTile;
 		
 		t.totalFrames = ob.totalFrames;
-		t.walkType = ob.walkType;
+		t.isWalkable = ob.isWalkable;
+		t.isSpecialWalkType = ob.isSpecialWalkType;
+		t.walkGLevel = ob.walkGLevel;
+		t.walkNode_L = ob.walkNode_L;
+		t.walkNode_M = ob.walkNode_M;
+		t.walkNode_R = ob.walkNode_R;
+		
 		t.extendsStandardTile = ob.extendsStandardTile;
 		t.width = ob.width;
 		t.height = ob.height;
