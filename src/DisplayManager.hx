@@ -592,25 +592,41 @@ class DisplayManager extends MainStageMC
 		for (z in 0...rows) {
 			for (q in 0...columns) {
 				var tob:TileObject = tilenum.get(map[z][q][0]);
+				var eventTob:TileObject = tilenum.get(map[z][q][3]);
 				
-				if (tob == null) { 
+				if (tob == null && eventTob == null) { 
 					continue;
 				}
 				
-				if (tob.isWalkable) {
-					if (tob.isSpecialWalkType) {
-						walkNodesAddWalkForm(z, q - 1, 	tob.walkGLevel, tob.walkNode_L, tob.depthPoint);
-						walkNodesAddWalkForm(z, q, 		tob.walkGLevel, tob.walkNode_M, tob.depthPoint);
-						walkNodesAddWalkForm(z, q + 1, 	tob.walkGLevel, tob.walkNode_R, tob.depthPoint);
-					}else {
-						walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1], 0);
+				if (eventTob != null) {
+					switch(eventTob.key) {
+						case 587:
+							// All side connector
+							walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1], 0, true);
+						case 588:
+							// Left/Bottom triangle connector
+							walkNodesAddWalkForm(z, q, 0, [0, 0, 0,  1, 0, 0,  1, 1, 0], 0, true);
+						case 593:
+							// Right/Top triangle connector
+							walkNodesAddWalkForm(z, q, 0, [0, 1, 1,  0, 0, 1,  0, 0, 0], 0, true);
 					}
-				}				
+				}else if (tob != null) {
+					if (tob.isWalkable) {
+						if (tob.isSpecialWalkType) {
+							walkNodesAddWalkForm(z, q - 1, 	tob.walkGLevel, tob.walkNode_L, tob.depthPoint, false);
+							walkNodesAddWalkForm(z, q, 		tob.walkGLevel, tob.walkNode_M, tob.depthPoint, false);
+							walkNodesAddWalkForm(z, q + 1, 	tob.walkGLevel, tob.walkNode_R, tob.depthPoint, false);
+						}else {
+							walkNodesAddWalkForm(z, q, 0, [1, 1, 1,  1, 1, 1,  1, 1, 1], 0, false);
+						}
+					}
+				}
+				//
 			}
 		}
 		//
 	}
-	private function walkNodesAddWalkForm(rowx:Int, colx:Int, glevel:Int, arr:Array<Int>, addDepth:Float):Void {
+	private function walkNodesAddWalkForm(rowx:Int, colx:Int, glevel:Int, arr:Array<Int>, addDepth:Float, allConnect:Bool):Void {
 		if (arr == null) {
 			return;
 		}
@@ -634,6 +650,7 @@ class DisplayManager extends MainStageMC
 					wnode.y = sy + (16.6) * i;
 					wnode.depth = Std.int(addDepth);
 					wnode.level = glevel;
+					wnode.allConnectMode = allConnect;
 					
 					var nx:Int = cast(Math.floor(wnode.x/ gap), Int);
 					var ny:Int = cast(Math.floor(wnode.y / gap), Int);
@@ -641,7 +658,7 @@ class DisplayManager extends MainStageMC
 					// if there already is a walkNode on the same glevel as this one, then don't add another - prevent duplicates
 					var addToNodes:Bool = true;
 					for (w in walkNodesMap[ny][nx]) {
-						if (w.level == glevel) {
+						if (w.level == glevel || allConnect) {
 							addToNodes = false;
 							break;
 						}
@@ -650,7 +667,7 @@ class DisplayManager extends MainStageMC
 					if (addToNodes) {
 						if (walkNodesMap[ny-1] != null) {
 							for (w in walkNodesMap[ny-1][nx]) {
-								if (w.level == glevel) {
+								if (w.level == glevel || allConnect || w.allConnectMode) {
 									wnode.addNeighbour(w);
 									w.addNeighbour(wnode);
 								}
@@ -658,7 +675,7 @@ class DisplayManager extends MainStageMC
 						}
 						if (walkNodesMap[ny][nx - 1] != null) {
 							for (w in walkNodesMap[ny][nx-1]) {
-								if (w.level == glevel) {
+								if (w.level == glevel || allConnect || w.allConnectMode) {
 									wnode.addNeighbour(w);
 									w.addNeighbour(wnode);
 								}
@@ -1209,7 +1226,7 @@ class DisplayManager extends MainStageMC
 		
 		
 		if (tob.ani_hasAnimation && anitileList[numSpacer(z, q)]) {//if (tob.ani_hasAnimation && anitileList[z+"_"+q]) { //if (tilenum[key][4][0] && anitileList[z+"_"+q]) {
-			var toPaste:Int = anitileList[numSpacer(z, q)][3]+1;
+			var toPaste:Int = Std.int(anitileList[numSpacer(z, q)][3]+1);
 
 			if (toPaste>tob.totalFrames){ //tilenum[key][5]) {
 				toPaste=1;
@@ -1365,7 +1382,7 @@ class DisplayManager extends MainStageMC
 				
 				
 				for (i in 0...largerthanView.length) {
-					tt = (largerthanView[i][0] * tileHeight)-largerthanView[i][6];	
+					tt = Std.int((largerthanView[i][0] * tileHeight)-largerthanView[i][6]);	
 					largerthanView[i][0]++;
 					largerthanView[i][6] = (largerthanView[i][0] * tileHeight)-tt;		
 				}
@@ -1400,7 +1417,7 @@ class DisplayManager extends MainStageMC
 				restmap = true;
 				
 				for (i in 0...largerthanView.length) {
-					tt = (largerthanView[i][1] * tileWidth)-largerthanView[i][5];	
+					tt = Std.int((largerthanView[i][1] * tileWidth)-largerthanView[i][5]);	
 					largerthanView[i][1]++;
 					largerthanView[i][5] = (largerthanView[i][1] * tileWidth)-tt;		
 				}
@@ -1444,7 +1461,7 @@ class DisplayManager extends MainStageMC
 				restmap = true;
 				
 				for (i in 0...largerthanView.length) {
-					tt = (largerthanView[i][0] * tileHeight)-largerthanView[i][6];	
+					tt = Std.int((largerthanView[i][0] * tileHeight)-largerthanView[i][6]);	
 					largerthanView[i][0]--;
 					largerthanView[i][6] = (largerthanView[i][0] * tileHeight)-tt;		
 				}
@@ -1485,7 +1502,7 @@ class DisplayManager extends MainStageMC
 					if (largerthanView[i] == null) {
 						continue; // object has been removed
 					}
-					tt = (largerthanView[i][1] * tileWidth)-largerthanView[i][5];	
+					tt = Std.int((largerthanView[i][1] * tileWidth)-largerthanView[i][5]);	
 					largerthanView[i][1]--;
 					largerthanView[i][5] = (largerthanView[i][1] * tileWidth)-tt;
 					

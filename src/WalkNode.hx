@@ -11,6 +11,7 @@ class WalkNode
 	public var y:Float;
 	public var neighbours:Array<WalkNode>;
 	public var depth:Int;
+	public var allConnectMode:Bool;
 
 	public function new() 
 	{
